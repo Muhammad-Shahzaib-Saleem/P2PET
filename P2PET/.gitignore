@@ -9,6 +9,17 @@ out/
 node_modules/
 # Docs
 docs/
-
+quorum-ibft-chain/quorum
+quorum-ibft-chain/node_modules/
+quorum-ibft-chain/broadcast/
+quorum-ibft-chain/cache/
+quorum-ibft-chain/out/
+quorum-ibft-chain/istanbul_tools_bins/
+quorum-ibft-chain/istanbul-tools-bins/
+quorum-ibft-chain/istanbul-tools/   
+quorum-ibft-chain/quorum
+quorum-ibft-chain/.env
+quorum-ibft-chain/node*
+quorum-ibft-chain/istanbul_tools_bins
 # Dotenv file
 .env
