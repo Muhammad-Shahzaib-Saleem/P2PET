@@ -1,0 +1,18 @@
+=============== Aug 8, 2025 (PKT) ===============
+13:57:26.580953 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+13:57:26.658834 db@open opening
+13:57:26.661539 version@stat F·[] S·0B[] Sc·[]
+13:57:26.675585 db@janitor F·2 G·0
+13:57:26.675627 db@open done T·16.739371ms
+13:57:26.677194 db@close closing
+13:57:26.677344 db@close done T·148.19µs
+=============== Aug 8, 2025 (PKT) ===============
+13:57:27.088320 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+13:57:27.088678 version@stat F·[] S·0B[] Sc·[]
+13:57:27.096158 db@open opening
+13:57:27.096352 journal@recovery F·1
+13:57:27.100177 journal@recovery recovering @1
+13:57:27.134870 memdb@flush created L0@2 N·28 S·1KiB "6ί..\xff\xbb8,v16":"\xd4\xf8\xd6..\xbd\x81E,v17"
+13:57:27.138945 version@stat F·[1] S·1KiB[1KiB] Sc·[0.25]
+13:57:27.360565 db@janitor F·3 G·0
+13:57:27.378362 db@open done T·282.159669ms
