@@ -16,7 +16,8 @@ CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
 
 # Read deployed contract address
 with open(CONTRACT_ADDRESS_PATH, "r") as f:
-    CONTRACT_ADDRESS = f.read().strip()
+    data = json.load(f)
+    CONTRACT_ADDRESS = data["contract_address"]
 
 # Connect to Web3
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
@@ -62,7 +63,7 @@ def submit_data(role: int, energy: int, price_wei: int):
 
 if __name__ == "__main__":
     try:
-        # register()
+        register()
         time.sleep(60)
         submit_data(role=2, energy=100, price_wei=Web3.to_wei(0.05, "ether"))
     except Exception as e:

@@ -1,0 +1,32 @@
+[
+    {
+        "address": "0x1111111111111111111111111111111111111111",
+        "role": 0,
+        "energyAmount": 500,
+        "pricePerKWh": 10
+    },
+    {
+        "address": "0x2222222222222222222222222222222222222222",
+        "role": 1,
+        "energyAmount": 300,
+        "pricePerKWh": 12
+    },
+    {
+        "address": "0x3333333333333333333333333333333333333333",
+        "role": 0,
+        "energyAmount": 700,
+        "pricePerKWh": 9
+    },
+    {
+        "address": "0x4444444444444444444444444444444444444444",
+        "role": 1,
+        "energyAmount": 250,
+        "pricePerKWh": 15
+    },
+    {
+        "address": "0x5555555555555555555555555555555555555555",
+        "role": 0,
+        "energyAmount": 600,
+        "pricePerKWh": 11
+    }
+]

@@ -1,8 +1,9 @@
 import json
 import os
 from web3 import Web3
-from web3.middleware import geth_poa_middleware
+# from web3.middleware import geth_poa_middleware
 from eth_account import Account
+from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
 from dotenv import load_dotenv
 from matching import Offer, greedy_double_auction
 from eth_utils import keccak
@@ -11,7 +12,8 @@ from eth_utils import keccak
 load_dotenv()
 
 # Env vars
-RPC_URL = os.getenv("RPC_URL")
+# RPC_URL = os.getenv("RPC_URL")
+RPC_URL = "http://127.0.0.1:22000"
 KEYSTORE_PATH = os.getenv("KEYSTORE_PATH")
 ACCOUNT_PASSWORD = os.getenv("ACCOUNT_PASSWORD")
 ABI_PATH = os.getenv("ABI_PATH")
@@ -19,7 +21,7 @@ CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
 
 # Web3
 w3 = Web3(Web3.HTTPProvider(RPC_URL))
-w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 # Load ABI
 with open(ABI_PATH, "r") as f:
@@ -27,7 +29,10 @@ with open(ABI_PATH, "r") as f:
 
 # Load contract address
 with open(CONTRACT_ADDRESS_PATH, "r") as f:
-    CONTRACT_ADDRESS = f.read().strip()
+    data = json.load(f)
+    CONTRACT_ADDRESS = data["contract_address"]
+
+    # CONTRACT_ADDRESS = f.read().strip()
 
 contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=abi)
 

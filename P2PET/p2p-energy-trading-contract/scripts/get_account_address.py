@@ -16,7 +16,9 @@ CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
 
 # Read deployed contract address
 with open(CONTRACT_ADDRESS_PATH, "r") as f:
-    CONTRACT_ADDRESS = f.read().strip()
+    data = json.load(f)
+    CONTRACT_ADDRESS = data["contract_address"]
+    # CONTRACT_ADDRESS = f.read().strip()
 
 # Connect to Web3
 w3 = Web3(Web3.HTTPProvider(RPC_URL))

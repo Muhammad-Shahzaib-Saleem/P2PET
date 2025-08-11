@@ -5,9 +5,7 @@
       "name": "Node0",
       "client": "goquorum",
       "rpcUrl": "https://127.0.0.1:22000",
-      "privateTxUrl": "http://localhost:9081",
-      "privateKey": "0x5f7aa06daa9f995f0940e98681e80c214a904f68ade61484caad927466257cfb",
-      "accountAddress": "0x75216C4dc2660B7cd7c867ab6123F134bbd61438"
+      "privateTxUrl": ""
     }
   ]
 }
