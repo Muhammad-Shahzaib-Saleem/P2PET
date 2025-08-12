@@ -4,3 +4,7 @@ nohup.out
 node_modules
 node*
 /quorum-ibft-chain/quorum/
+quorum-ibft-chain/node0
+quorum-ibft-chain/node1
+quorum-ibft-chain/node2
+quorum-ibft-chain/node3

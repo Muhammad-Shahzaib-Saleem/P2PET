@@ -18,7 +18,7 @@ private_key = Account.decrypt(keystore, ACCOUNT_PASSWORD)
 hex_key = private_key.hex()
 
 # Append PRIVATE_KEY to .env file if not already present
-env_path = ".env"
+env_path = "../.env"
 
 with open(env_path, "r") as f:
     lines = f.readlines()
