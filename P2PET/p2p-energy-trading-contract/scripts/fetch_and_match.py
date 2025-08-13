@@ -7,6 +7,7 @@ from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
 from dotenv import load_dotenv
 from matching import Offer, greedy_double_auction
 from eth_utils import keccak
+from decrypt_key import get_private_key
 
 # Load .env
 load_dotenv()
@@ -14,7 +15,6 @@ load_dotenv()
 # Env vars
 # RPC_URL = os.getenv("RPC_URL")
 RPC_URL = "http://127.0.0.1:22000"
-KEYSTORE_PATH = os.getenv("KEYSTORE_PATH")
 ACCOUNT_PASSWORD = os.getenv("ACCOUNT_PASSWORD")
 ABI_PATH = os.getenv("ABI_PATH")
 CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
@@ -32,16 +32,12 @@ with open(CONTRACT_ADDRESS_PATH, "r") as f:
     data = json.load(f)
     CONTRACT_ADDRESS = data["contract_address"]
 
-    # CONTRACT_ADDRESS = f.read().strip()
+
 
 contract = w3.eth.contract(address=CONTRACT_ADDRESS, abi=abi)
 
-# Load keystore and decrypt
-with open(KEYSTORE_PATH) as keyfile:
-    encrypted_key = json.load(keyfile)
-    private_key = Account.decrypt(encrypted_key, ACCOUNT_PASSWORD).hex()
 
-account = w3.eth.account.from_key(private_key)
+account = w3.eth.account.from_key(get_private_key())
 sender_address = account.address
 
 def fetch_all_participants():
@@ -71,7 +67,7 @@ def send_result_hash_to_contract(result_hash_hex):
         'gasPrice': 0
     })
 
-    signed_tx = w3.eth.account.sign_transaction(tx, private_key=private_key)
+    signed_tx = w3.eth.account.sign_transaction(tx, get_private_key())
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     return tx_hash.hex()
 
