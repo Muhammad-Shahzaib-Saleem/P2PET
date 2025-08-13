@@ -1,24 +1,45 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
-import os
-import json
-from dotenv import load_dotenv
-from web3 import Web3
-from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
-# from web3.middleware import geth_poa_middleware
+import subprocess
 from eth_account import Account
-from hexbytes import HexBytes
-
+import os, time
+import json
+from web3 import Web3
+# from web3.middleware import geth_poa_middleware
+from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
+from web3.exceptions import ContractLogicError
+import socket
+from fastapi import FastAPI, HTTPException
+import sys
+from dotenv import load_dotenv
 
 load_dotenv()
 
-ABI_PATH = "../compiled/EnergyTrade_abi.json"
-CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
+# app
+app = FastAPI(title="P2P Enerygy Trading API")
 
-WEB3_PROVIDER = "http://127.0.0.1:22000"
-# CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS")
-PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+# Get local IP address and build RPC_URL properly
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+try:
+    s.connect(('192.168.0.1', 1))
+    ip_address = s.getsockname()[0]
+finally:
+    s.close()
+
+RPC_URL = f"http://{ip_address}:22000"
+LOCAL_RPC_URL = "http://127.0.0.1:22000"
+LOCAL_PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+
+CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
+ABI_PATH = os.getenv("ABI_PATH")
+
+# Keystore and contract details
+keystore = subprocess.check_output(
+    "cd ..; cd ..; cd quorum-ibft-chain; cd node*; cd data/keystore; cat $(ls | head -n 1)",
+    shell=True,
+    text=True,
+).strip()
+
+ACCOUNT_PASSWORD = os.getenv("ACCOUNT_PASSWORD")
+
 
 with open(CONTRACT_ADDRESS_PATH, "r") as f:
     data = json.load(f)
@@ -26,280 +47,257 @@ with open(CONTRACT_ADDRESS_PATH, "r") as f:
 
 
 with open(ABI_PATH, "r") as abi_file:
-    ABI = json.load(abi_file)
+    abi = json.load(abi_file)
 
-if not (WEB3_PROVIDER and CONTRACT_ADDRESS and PRIVATE_KEY):
-    raise RuntimeError("Please set WEB3_PROVIDER, CONTRACT_ADDRESS and PRIVATE_KEY in .env")
 
-w3 = Web3(Web3.HTTPProvider(WEB3_PROVIDER))
-# If using a POA testnet (like BSC testnet or some Quorum setups) uncomment:
+try:
+    private_key_bytes = Account.decrypt(keystore, ACCOUNT_PASSWORD)
+    PRIVATE_KEY = private_key_bytes.hex()
+except Exception as e:
+    raise RuntimeError(f"Failed to decrypt private key: {e}")
+
+# Web3 instance
+w3 = Web3(Web3.HTTPProvider(LOCAL_RPC_URL))
 w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
-acct = Account.from_key(PRIVATE_KEY)
-ADDRESS = acct.address
+# Set up account
+account = w3.eth.account.from_key(PRIVATE_KEY)
+sender_address = account.address
 
-app = FastAPI(title="EnergyTrade API")
-
-# # Minimal ABI subset for contract interactions (only the functions we need)
-# ABI = [
-#     # register()
-#     {
-#         "inputs": [],
-#         "name": "register",
-#         "outputs": [],
-#         "stateMutability": "nonpayable",
-#         "type": "function"
-#     },
-#     # submitData(Role,uint256,uint256)
-#     {
-#         "inputs": [
-#             {"internalType": "uint8", "name": "_role", "type": "uint8"},
-#             {"internalType": "uint256", "name": "_energyAmount", "type": "uint256"},
-#             {"internalType": "uint256", "name": "_pricePerKWh", "type": "uint256"}
-#         ],
-#         "name": "submitData",
-#         "outputs": [],
-#         "stateMutability": "nonpayable",
-#         "type": "function"
-#     },
-#     # advancePhase()
-#     {
-#         "inputs": [],
-#         "name": "advancePhase",
-#         "outputs": [],
-#         "stateMutability": "nonpayable",
-#         "type": "function"
-#     },
-#     # hashParticipantsList()
-#     {
-#         "inputs": [],
-#         "name": "hashParticipantsList",
-#         "outputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}],
-#         "stateMutability": "nonpayable",
-#         "type": "function"
-#     },
-#     # submitExecutionResult(bytes32)
-#     {
-#         "inputs": [{"internalType": "bytes32", "name": "resultHash", "type": "bytes32"}],
-#         "name": "submitExecutionResult",
-#         "outputs": [],
-#         "stateMutability": "nonpayable",
-#         "type": "function"
-#     },
-#     # verifyExecutionResult()
-#     {
-#         "inputs": [],
-#         "name": "verifyExecutionResult",
-#         "outputs": [
-#             {"internalType": "bytes32", "name": "majorityHash", "type": "bytes32"},
-#             {"internalType": "bool", "name": "isVerified", "type": "bool"}
-#         ],
-#         "stateMutability": "nonpayable",
-#         "type": "function"
-#     },
-#     # participantsList(uint256) getter
-#     {
-#         "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-#         "name": "participantsList",
-#         "outputs": [
-#             {"internalType": "address", "name": "id", "type": "address"},
-#             {"internalType": "uint8", "name": "role", "type": "uint8"},
-#             {"internalType": "uint256", "name": "energyAmount", "type": "uint256"},
-#             {"internalType": "uint256", "name": "pricePerKWh", "type": "uint256"}
-#         ],
-#         "stateMutability": "view",
-#         "type": "function"
-#     },
-#     # submittedResults(uint256) getter
-#     {
-#         "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-#         "name": "submittedResults",
-#         "outputs": [
-#             {"internalType": "address", "name": "submitter", "type": "address"},
-#             {"internalType": "bytes32", "name": "resultHash", "type": "bytes32"}
-#         ],
-#         "stateMutability": "view",
-#         "type": "function"
-#     },
-#     # currentPhase()
-#     {
-#         "inputs": [],
-#         "name": "currentPhase",
-#         "outputs": [{"internalType": "enum EnergyTrade.Phase", "name": "", "type": "uint8"}],
-#         "stateMutability": "view",
-#         "type": "function"
-#     },
-#     # currentRound()
-#     {
-#         "inputs": [],
-#         "name": "currentRound",
-#         "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-#         "stateMutability": "view",
-#         "type": "function"
-#     },
-#     # TOTAL_PARTICIPANTS()
-#     {
-#         "inputs": [],
-#         "name": "TOTAL_PARTICIPANTS",
-#         "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-#         "stateMutability": "view",
-#         "type": "function"
-#     },
-#     # finalHash()
-#     {
-#         "inputs": [],
-#         "name": "finalHash",
-#         "outputs": [{"internalType": "bytes32", "name": "", "type": "bytes32"}],
-#         "stateMutability": "view",
-#         "type": "function"
-#     }
-# ]
+# Contract instance
+contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=abi)
 
 
-contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=ABI)
+def send_transaction(function_call):
+    nonce = w3.eth.get_transaction_count(sender_address)
 
-# Helper: build, sign and send tx
-def send_transaction(function_tx):
-    """function_tx is contract.functions.<method>(...).buildTransaction(tx) OR the contract function itself"""
-    # Build tx if not built already
-    nonce = w3.eth.get_transaction_count(ADDRESS)
-    tx = function_tx.buildTransaction({
-        "from": ADDRESS,
-        "nonce": nonce,
-        "gas": 3000000,
-        "gasPrice": w3.eth.gas_price,
-        "chainId": w3.eth.chain_id
+    tx = function_call.build_transaction({
+        'from': sender_address,
+        'nonce': nonce,
+        'gas': 500000,
+        'gasPrice': 0
     })
-    signed = acct.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+
+    signed_tx = w3.eth.account.sign_transaction(tx, PRIVATE_KEY)
+
+    # Use correct attribute name for Web3.py v6+
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+    print(f"Transaction sent: {tx_hash.hex()} — waiting for receipt...")
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    if receipt.status == 0:
+        print("Transaction failed.")
+        try:
+            tx_call = {
+                'to': tx['to'],
+                'from': sender_address,
+                'data': tx['data'],
+                'gas': tx['gas']
+            }
+            revert_msg = w3.eth.call(tx_call, block_identifier=receipt.blockNumber)
+            print("Unknown failure reason.")
+        except ContractLogicError as e:
+            message = str(e)
+            if message.startswith("execution reverted:"):
+                clean_msg = message.split("execution reverted:")[1].strip()
+                print(f"Revert reason: {clean_msg}")
+            else:
+                print(f"Revert reason: {message}")
+        except Exception as e:
+            print(f"Failed to decode revert reason: {e}")
+
     return receipt
 
-# Pydantic models
-class SubmitDataModel(BaseModel):
-    role: int  # 0 = N_A, 1 = Buyer, 2 = Seller (enum from contract)
-    energyAmount: int
-    pricePerKWh: int
-
-class SubmitExecutionModel(BaseModel):
-    # expects hex string like 0xabc... representing 32 bytes
-    resultHash: str
 
 
 
-
-@app.get('/')
+@app.get('/contract')
 def checking_contract():
     try:
         return {"contractAddress": CONTRACT_ADDRESS,"status": True}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
+@app.get('/private-key')
+def checking_contract():
+    try:
+        return {"Private Keys": PRIVATE_KEY,"status": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/register")
-def register():
-    try:
-        receipt = send_transaction(contract.functions.register())
-        return {"txHash": receipt.transactionHash.hex(), "status": receipt.status}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+def register_participant():
+    receipt = send_transaction(contract.functions.register())
+    if receipt.status == 1:
+        return {"status": "success", "message": "Transaction successful."}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
+
 
 @app.post("/submit-data")
-def submit_data(payload: SubmitDataModel):
-    try:
-        # note: contract expects uint8 for role
-        receipt = send_transaction(contract.functions.submitData(payload.role, payload.energyAmount, payload.pricePerKWh))
-        return {"txHash": receipt.transactionHash.hex(), "status": receipt.status}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+def submit_data(role:int, energy:int, price:int):
+    receipt = send_transaction(contract.functions.submitData(role, energy, price))
+    if receipt.status == 1:
+        return {"status": "success", "message": "Transaction successful."}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
+
 
 @app.post("/advance-phase")
 def advance_phase():
-    try:
-        receipt = send_transaction(contract.functions.advancePhase())
-        return {"txHash": receipt.transactionHash.hex(), "status": receipt.status}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    receipt = send_transaction(contract.functions.advancePhase())
+    if receipt.status == 1:
+        return {"status": "success", "message": "Transaction successful."}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
 
-@app.post("/hash-participants")
-def hash_participants():
-    try:
-        # hashParticipantsList is nonpayable and modifies previousHash -> tx
-        receipt = send_transaction(contract.functions.hashParticipantsList())
-        return {"txHash": receipt.transactionHash.hex(), "status": receipt.status}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/submit-execution")
-def submit_execution(payload: SubmitExecutionModel):
-    try:
-        # convert hex string to bytes32
-        h = payload.resultHash
-        if not h.startswith("0x"):
-            raise ValueError("resultHash must be 0x-prefixed hex")
-        # Ensure 32 bytes
-        b = HexBytes(h)
-        if len(b) != 32:
-            raise ValueError("resultHash must be 32 bytes (64 hex chars after 0x)")
-        receipt = send_transaction(contract.functions.submitExecutionResult(b))
-        return {"txHash": receipt.transactionHash.hex(), "status": receipt.status}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@app.post("/submit-execution-result")
+def submit_execution_result(result: str):
+    receipt = send_transaction(contract.functions.submitExecutionResult(Web3.keccak(text=result)))
+    if receipt.status == 1:
+        return {"status": "success", "message": "Transaction successful."}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
+
 
 @app.post("/verify-execution")
 def verify_execution():
-    try:
-        # verifyExecutionResult modifies state, so send tx
-        receipt = send_transaction(contract.functions.verifyExecutionResult())
-        # The contract returns (bytes32, bool) but returning via tx receipt logs is complex.
-        return {"txHash": receipt.transactionHash.hex(), "status": receipt.status}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    receipt = send_transaction(contract.functions.verifyExecutionResult())
+    if receipt.status == 1:
+        return {"status": "success", "message": "Transaction successful."}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
 
-@app.get("/participants")
-def get_participants():
+
+@app.get("/total-participants")
+def get_total_participants():
+    try:
+        value = contract.functions.TOTAL_PARTICIPANTS().call()
+        return {"TOTAL_PARTICIPANTS": value}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/participants-list")
+def get_participants_list():
     try:
         total = contract.functions.TOTAL_PARTICIPANTS().call()
-        result = []
+        participants = []
         for i in range(total):
-            p = contract.functions.participantsList(i).call()
-            # p is (address, uint8, uint256, uint256)
-            result.append({
-                "index": i,
-                "id": p[0],
-                "role": p[1],
-                "energyAmount": p[2],
-                "pricePerKWh": p[3]
-            })
-        return result
+            data = contract.functions.participantsList(i).call()
+            participants.append(data)
+        return {"participantsList": participants}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/phase")
-def get_phase():
+
+@app.get("/address-to-slot/{address}")
+def get_address_to_slot(address: str):
     try:
-        phase = contract.functions.currentPhase().call()  # uint8
-        round_ = contract.functions.currentRound().call()
-        return {"currentPhase": phase, "currentRound": round_}
+        checksum_addr = Web3.to_checksum_address(address)
+        slot = contract.functions.addressToSlot(checksum_addr).call()
+        return {"address": checksum_addr, "slot": slot}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/next-available-slot")
+def get_next_available_slot():
+    try:
+        slot = contract.functions.nextAvailableSlot().call()
+        return {"nextAvailableSlot": slot}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/current-round")
+def get_current_round():
+    try:
+        round_num = contract.functions.currentRound().call()
+        return {"currentRound": round_num}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/current-phase")
+def get_current_phase():
+    try:
+        phase = contract.functions.currentPhase().call()
+        phase_mapping = {
+            0: "DataSubmission",
+            1: "Execution",
+            2: "Verification",
+            # add more if needed
+        }
+        phase_str = phase_mapping.get(phase, str(phase))
+        return {"currentPhase": phase_str}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/previous-hash")
+def get_previous_hash():
+    try:
+        phash = contract.functions.previousHash().call()
+        return {"previousHash": phash.hex() if isinstance(phash, bytes) else phash}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/previous-hash-execution")
+def get_previous_hash_execution():
+    try:
+        phash_exec = contract.functions.previousHashExecution().call()
+        return {"previousHashExecution": phash_exec.hex() if isinstance(phash_exec, bytes) else phash_exec}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/final-hash")
+def get_final_hash():
+    try:
+        fhash = contract.functions.finalHash().call()
+        return {"finalHash": fhash.hex() if isinstance(fhash, bytes) else fhash}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/submitted-results")
 def get_submitted_results():
     try:
-        entries = []
+        results = []
         for i in range(5):
-            r = contract.functions.submittedResults(i).call()
-            entries.append({
-                "index": i,
-                "submitter": r[0],
-                "resultHash": r[1].hex() if isinstance(r[1], (bytes, bytearray, HexBytes)) else r[1]
+            submitter, result_hash = contract.functions.submittedResults(i).call()
+            results.append({
+                "submitter": submitter,
+                "resultHash": result_hash.hex()  # convert bytes32 → hex string
             })
-        final = contract.functions.finalHash().call()
-        return {"submittedResults": entries, "finalHash": final.hex() if isinstance(final, (bytes, bytearray, HexBytes)) else final}
+        return {"submittedResults": results}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.get("/result-submission-count")
+def get_result_submission_count():
+    try:
+        count = contract.functions.resultSubmissionCount().call()
+        return {"resultSubmissionCount": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/has-submitted-result/{address}")
+def get_has_submitted_result(address: str):
+    try:
+        checksum_addr = Web3.to_checksum_address(address)
+        has_submitted = contract.functions.hasSubmittedResult(checksum_addr).call()
+        return {"address": checksum_addr, "hasSubmittedResult": has_submitted}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 if __name__ == "__main__":
