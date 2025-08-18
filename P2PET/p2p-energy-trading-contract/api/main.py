@@ -10,6 +10,7 @@ import socket
 from fastapi import FastAPI, HTTPException
 import sys
 from dotenv import load_dotenv
+from fetch_and_match import run_matching_and_get_hash
 
 load_dotenv()
 
@@ -110,6 +111,12 @@ def send_transaction(function_call):
     return receipt
 
 
+@app.get('/')
+def checking_contract():
+    try:
+        return {"health":"ok","status": True,"version":"1.0.0","description":"This is P2P Energy trading contract api (Endoints)"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get('/contract')
@@ -125,6 +132,7 @@ def checking_contract():
         return {"Private Keys": PRIVATE_KEY,"status": True}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.post("/register")
 def register_participant():
@@ -154,12 +162,28 @@ def advance_phase():
 
 
 @app.post("/submit-execution-result")
-def submit_execution_result(result: str):
-    receipt = send_transaction(contract.functions.submitExecutionResult(Web3.keccak(text=result)))
+def submit_execution_result():
+    result_hash_hex = run_matching_and_get_hash(contract)
+
+    if not result_hash_hex:
+        raise HTTPException(status_code=400, detail="No participants found or matching failed.")
+
+    receipt = send_transaction(
+        contract.functions.submitExecutionResult(Web3.to_bytes(hexstr=result_hash_hex))
+    )
+
     if receipt.status == 1:
         return {"status": "success", "message": "Transaction successful."}
     else:
         raise HTTPException(status_code=400, detail="Transaction failed.")
+
+# @app.post("/submit-execution-result")
+# def submit_execution_result(result: str):
+#     receipt = send_transaction(contract.functions.submitExecutionResult(Web3.keccak(text=result)))
+#     if receipt.status == 1:
+#         return {"status": "success", "message": "Transaction successful."}
+#     else:
+#         raise HTTPException(status_code=400, detail="Transaction failed.")
 
 
 @app.post("/verify-execution")
@@ -277,7 +301,6 @@ def get_submitted_results():
         return {"submittedResults": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @app.get("/result-submission-count")
