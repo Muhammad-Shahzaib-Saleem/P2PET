@@ -1,14 +1,3 @@
-import os
-from os import system as shellRun
-from functions import *
-import sys
-
-# Set default to Raspberry Pi execution unless specified
-if len(sys.argv) > 1:
-    is_raspberrypi = int(sys.argv[1])
-else:
-    is_raspberrypi = 1
-
 # List of specific Raspberry Pi nodes to run the blockchain on
 nodes_to_run = [2, 3, 4, 5]
 # nodes_to_run = [1, 2, 3, 4]
@@ -27,113 +16,124 @@ ip_dict = {
     10: '192.168.0.152'
 }
 
-assert len(nodes_to_run) > 0
+if __name__ == "__main__":
 
-# Map real node index to virtual local indices (e.g., [2, 3, 5] → {0: 2, 1: 3, 2: 5})
-index_to_node = {i: node for i, node in enumerate(nodes_to_run)}
-node_to_index = {node: i for i, node in enumerate(nodes_to_run)}
+    import os
+    from os import system as shellRun
+    from functions import *
+    import sys
 
-# Create node folders
-for i in range(len(nodes_to_run)):
-    shellRun(f"mkdir -p node{i}")
+    # Set default to Raspberry Pi execution unless specified
+    if len(sys.argv) > 1:
+        is_raspberrypi = int(sys.argv[1])
+    else:
+        is_raspberrypi = 1
 
-# Setup Istanbul with number of validators
-os.chdir("node0")
-shellRun(f"istanbul setup --num {len(nodes_to_run)} --nodes --quorum --save --verbose >> istanbul.log")
-get_data_from_istanbul("istanbul.log")
-shellRun("mv validators.log ../")
-shellRun("mv dummy-genesis.json ../")
-shellRun("mv dummy-static-nodes.json ../")
-os.chdir("..")
+    assert len(nodes_to_run) > 0
 
-# Update IPs in static-nodes.json
-ip_subset = {i+1: ip_dict[node] for i, node in enumerate(nodes_to_run)}
-update_port_numbers("dummy-static-nodes.json", ip_subset, is_raspberrypi)
+    # Map real node index to virtual local indices (e.g., [2, 3, 5] → {0: 2, 1: 3, 2: 5})
+    index_to_node = {i: node for i, node in enumerate(nodes_to_run)}
+    node_to_index = {node: i for i, node in enumerate(nodes_to_run)}
 
-# Create accounts
-acc_passwd = "12345"
-for i in range(len(nodes_to_run)):
-    shellRun(f"mkdir -p node{i}/data/geth")
-    create_account(acc_passwd, f"node{i}/data", i)
-    with open(f"node{i}/data/password.txt", "w") as pw_file:
-        pw_file.write(acc_passwd)
+    # Create node folders
+    for i in range(len(nodes_to_run)):
+        shellRun(f"mkdir -p node{i}")
 
-# Update genesis with public keys
-public_addr_dict = extract_acc_public_keys("geth_accounts_info.log")
-balance = "0x446c3b15f9926687d2c40534fdb564000000000000"
-for i in range(len(nodes_to_run)):
-    insert_in_json("node0/genesis.json", "alloc", public_addr_dict[i], balance)
-
-# Distribute genesis & static-nodes
-for i in range(len(nodes_to_run)):
-    shellRun(f"cp -Rn node0/genesis.json node{i}")
-    shellRun(f"cp -Rn dummy-static-nodes.json node{i}/data/static-nodes.json")
-    shellRun(f"cp -Rn node0/{i}/nodekey node{i}/data/geth")
-    shellRun(f"rm -rf node{i}/static-nodes.json")
-
-# Initialize nodes
-for i in range(len(nodes_to_run)):
-    os.chdir(f"node{i}")
-    shellRun("geth --datadir data init genesis.json")
+    # Setup Istanbul with number of validators
+    os.chdir("node0")
+    shellRun(f"istanbul setup --num {len(nodes_to_run)} --nodes --quorum --save --verbose >> istanbul.log")
+    get_data_from_istanbul("istanbul.log")
+    shellRun("mv validators.log ../")
+    shellRun("mv dummy-genesis.json ../")
+    shellRun("mv dummy-static-nodes.json ../")
     os.chdir("..")
 
-# Starting up nodes
-rpc_port_num = 22000
-port_num = 30300
-pi_password = 'Lums12345'
+    # Update IPs in static-nodes.json
+    ip_subset = {i+1: ip_dict[node] for i, node in enumerate(nodes_to_run)}
+    update_port_numbers("dummy-static-nodes.json", ip_subset, is_raspberrypi)
 
-for i in range(len(nodes_to_run)):
-    node_number = index_to_node[i]
-    start_node_file = open(f"startnode{i}.sh", "w")
+    # Create accounts
+    acc_passwd = "12345"
+    for i in range(len(nodes_to_run)):
+        shellRun(f"mkdir -p node{i}/data/geth")
+        create_account(acc_passwd, f"node{i}/data", i)
+        with open(f"node{i}/data/password.txt", "w") as pw_file:
+            pw_file.write(acc_passwd)
 
-    unlock_addr = public_addr_dict[i]
+    # Update genesis with public keys
+    public_addr_dict = extract_acc_public_keys("geth_accounts_info.log")
+    balance = "0x446c3b15f9926687d2c40534fdb564000000000000"
+    for i in range(len(nodes_to_run)):
+        insert_in_json("node0/genesis.json", "alloc", public_addr_dict[i], balance)
 
-    if is_raspberrypi:
-        final_command = (
-        f"PRIVATE_CONFIG=ignore /usr/local/quorum_bins/geth "
-        f"--datadir data --nodiscover --istanbul.blockperiod 60 --syncmode full "
-        f"--mine --miner.threads 1 --verbosity 5 --networkid 10 "
-        f"--http --http.addr {ip_dict[node_number]} --http.port {rpc_port_num} "
-        f"--http.api admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul "
-        f"--emitcheckpoints --allow-insecure-unlock "
-        f"--unlock {unlock_addr} --password data/password.txt "
-        f"--port {port_num} 2>>node{i}.log &"
-    )
-    else:
-        final_command = (
-        f"PRIVATE_CONFIG=ignore /usr/local/quorum_bins/geth "
-        f"--datadir data --nodiscover --istanbul.blockperiod 60 --syncmode full "
-        f"--mine --miner.threads 1 --verbosity 5 --networkid 10 "
-        f"--http --http.addr 127.0.0.1 --http.port {rpc_port_num} "
-        f"--http.api admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul "
-        f"--http.corsdomain https://remix.ethereum.org "
-        f"--emitcheckpoints --allow-insecure-unlock "
-        f"--unlock {unlock_addr} --password data/password.txt "
-        f"--port {port_num} 2>>node{i}.log &"
-    )
+    # Distribute genesis & static-nodes
+    for i in range(len(nodes_to_run)):
+        shellRun(f"cp -Rn node0/genesis.json node{i}")
+        shellRun(f"cp -Rn dummy-static-nodes.json node{i}/data/static-nodes.json")
+        shellRun(f"cp -Rn node0/{i}/nodekey node{i}/data/geth")
+        shellRun(f"rm -rf node{i}/static-nodes.json")
 
-    start_node_file.write(final_command)
-    start_node_file.close()
+    # Initialize nodes
+    for i in range(len(nodes_to_run)):
+        os.chdir(f"node{i}")
+        shellRun("geth --datadir data init genesis.json")
+        os.chdir("..")
 
-    shellRun(f"chmod +x startnode{i}.sh")
-    shellRun(f"mv startnode{i}.sh node{i}/startnode{i}.sh")
+    # Starting up nodes
+    rpc_port_num = 22000
+    port_num = 30300
+    pi_password = 'Lums12345'
 
-    if is_raspberrypi:
-        try:
-            execute_remotely(["cd ~", "cd block-chain-network", "./del_junk.sh", "./del_junk.sh"], "pi", ip_dict[node_number], pi_password)
-            command = f"scp -r node{i}/ pi@{ip_dict[node_number]}:/home/pi/block-chain-network"
-            prompt_expected = f"pi@{ip_dict[node_number]}'s password: "
-            scp_distribution(command, prompt_expected, pi_password)
-            execute_remotely(["cd ~", f"cd block-chain-network/node{i}", f"./startnode{i}.sh"], "pi", ip_dict[node_number], pi_password)
-        except:
-            shellRun("./del_junk.sh")
-            raise ConnectionError(f"Raspberry Pi node {node_number} is off/not accessible!")
-    else:
-        shellRun(f"cd node{i} && ./startnode{i}.sh")
+    for i in range(len(nodes_to_run)):
+        node_number = index_to_node[i]
+        start_node_file = open(f"startnode{i}.sh", "w")
 
-    rpc_port_num += 1
-    port_num += 1
+        unlock_addr = public_addr_dict[i]
 
-# Cleanup
-shellRun("rm -rf dummy-genesis.json")
-shellRun("rm -rf dummy-static-nodes.json")
+        if is_raspberrypi:
+            final_command = (
+            f"PRIVATE_CONFIG=ignore /usr/local/quorum_bins/geth "
+            f"--datadir data --nodiscover --istanbul.blockperiod 60 --syncmode full "
+            f"--mine --miner.threads 1 --verbosity 5 --networkid 10 "
+            f"--http --http.addr {ip_dict[node_number]} --http.port {rpc_port_num} "
+            f"--http.api admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul "
+            f"--emitcheckpoints "
+            f"--port {port_num} 2>>node{i}.log &"
+        )
+        else:
+            final_command = (
+            f"PRIVATE_CONFIG=ignore /usr/local/quorum_bins/geth "
+            f"--datadir data --nodiscover --istanbul.blockperiod 60 --syncmode full "
+            f"--mine --miner.threads 1 --verbosity 5 --networkid 10 "
+            f"--http --http.addr 127.0.0.1 --http.port {rpc_port_num} "
+            f"--http.api admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul "
+            f"--http.corsdomain https://remix.ethereum.org "
+            f"--emitcheckpoints "
+            f"--port {port_num} 2>>node{i}.log &"
+        )
+
+        start_node_file.write(final_command)
+        start_node_file.close()
+
+        shellRun(f"chmod +x startnode{i}.sh")
+        shellRun(f"mv startnode{i}.sh node{i}/startnode{i}.sh")
+
+        if is_raspberrypi:
+            try:
+                execute_remotely(["cd ~", "cd P2PET", "./del_junk.sh", "./del_junk.sh"], "pi", ip_dict[node_number], pi_password)
+                command = f"scp -r node{i}/ pi@{ip_dict[node_number]}:/home/pi/P2PET"
+                prompt_expected = f"pi@{ip_dict[node_number]}'s password: "
+                scp_distribution(command, prompt_expected, pi_password)
+                execute_remotely(["cd ~", f"cd P2PET/node{i}", f"./startnode{i}.sh"], "pi", ip_dict[node_number], pi_password)
+            except:
+                shellRun("./del_junk.sh")
+                raise ConnectionError(f"Raspberry Pi node {node_number} is off/not accessible!")
+        else:
+            shellRun(f"cd node{i} && ./startnode{i}.sh")
+
+        rpc_port_num += 1
+        port_num += 1
+
+    # Cleanup
+    shellRun("rm -rf dummy-genesis.json")
+    shellRun("rm -rf dummy-static-nodes.json")

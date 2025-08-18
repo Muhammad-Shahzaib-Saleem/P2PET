@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # app
-app = FastAPI(title="P2P Enerygy Trading API")
+app = FastAPI(title="P2P Energy Trading API")
 
 # Get local IP address and build RPC_URL properly
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

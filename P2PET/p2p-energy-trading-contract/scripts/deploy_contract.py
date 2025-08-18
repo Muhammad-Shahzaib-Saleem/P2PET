@@ -1,11 +1,18 @@
 import os
 import json
+import sys
+
 from dotenv import load_dotenv
 from web3 import Web3
 from web3.middleware.proof_of_authority import ExtraDataToPOAMiddleware
 from eth_account import Account
 from decrypt_key import get_private_key
 # from ../../quorum-ibft-chain/initial_validators import nodes_to_run, ip_dict
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../quorum-ibft-chain")))
+from initial_validators import nodes_to_run, ip_dict
+
+
+
 
 
 
@@ -96,9 +103,32 @@ def save_contract_address_json(contract_name: str, address: str, output_dir: str
         json.dump({"contract_address": address}, file, indent=4)
     print(f"Contract address saved to {path}")
 
+def scp_distribution(command, prompt_expected, prompt_password):
+    """This method is used distribute files to Raspberry Pis using secure copy (scp) command"""
+
+    import pexpect
+
+    # Spawn a child process
+    child = pexpect.spawn(command)
+
+    # Wait for the password prompt and send the password
+    child.expect(prompt_expected)
+    child.sendline(prompt_password)
+
+    # Wait for the process to complete
+    child.expect(pexpect.EOF)
+
 
 def main():
+
     load_env()
+
+    pi_password = 'Lums12345'
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    contract_address_path = os.path.join(os.path.dirname(script_dir), 'deployed/energy_trade_contract_address.json')
+    abi_path = os.path.join(os.path.dirname(script_dir), 'compiled/EnergyTrade_abi.json')
+
     w3 = connect_web3(RPC_URL)
     print(f"Connected to node at {RPC_URL}")
 
@@ -110,6 +140,15 @@ def main():
     print(f"Contract deployed at: {contract_address}")
 
     save_contract_address_json(CONTRACT_NAME, contract_address, DEPLOYED_DIR)
+
+    for node_number in nodes_to_run:
+        command = f"scp -r {contract_address_path} pi@{ip_dict[node_number]}:/home/pi/P2PET/p2p-energy-trading-contract/deployed/energy_trade_contract_address.json"
+        prompt_expected = f"pi@{ip_dict[node_number]}'s password: "
+        scp_distribution(command, prompt_expected, pi_password)
+
+        command = f"scp -r {abi_path} pi@{ip_dict[node_number]}:/home/pi/P2PET/p2p-energy-trading-contract/compiled/EnergyTrade_abi.json"
+        prompt_expected = f"pi@{ip_dict[node_number]}'s password: "
+        scp_distribution(command, prompt_expected, pi_password)
 
 
 if __name__ == "__main__":

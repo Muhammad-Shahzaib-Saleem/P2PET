@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from web3.exceptions import ContractLogicError
 from decrypt_key import get_private_key, update_keystore_path_in_env
 
+
 update_keystore_path_in_env()
 
 # Load .env
