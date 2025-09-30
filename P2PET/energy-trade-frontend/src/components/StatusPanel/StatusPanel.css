@@ -1,0 +1,77 @@
+/* Center the card */
+.status-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px); /* full height minus navbar/sidebar if needed */
+}
+
+.status-card {
+  max-width: 720px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* Header */
+.status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.status-head h3 { margin: 0; color: #0d1b2a; }
+
+/* Refresh button */
+.refresh {
+  background: #eef2ff;
+  border: 1px solid #d7defd;
+  color: #2f43d9;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.refresh:hover { background: #e5ebff; }
+
+/* Stats grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 12px;
+}
+.stat {
+  background: #fbfcff;
+  border: 1px solid #eef1fb;
+  border-radius: 12px;
+  padding: 12px;
+}
+.stat-label { color: #566483; font-size: .85rem; }
+.stat-value { color: #091a37; font-weight: 700; font-size: 1.1rem; margin-top: 4px; }
+
+
+/* // src/components/StatusPanel/StatusPanel.css
+.status-card { max-width: 720px; }
+.status-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.status-head h3 { margin: 0; color: #0d1b2a; }
+.refresh {
+  background: #eef2ff; border: 1px solid #d7defd; color: #2f43d9;
+  border-radius: 10px; padding: 6px 10px; cursor: pointer;
+}
+.refresh:hover { background: #e5ebff; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 12px;
+}
+.stat {
+  background: #fbfcff; border: 1px solid #eef1fb; border-radius: 12px;
+  padding: 12px;
+}
+.stat-label { color: #566483; font-size: .85rem; }
+.stat-value { color: #091a37; font-weight: 700; font-size: 1.1rem; margin-top: 4px; } */

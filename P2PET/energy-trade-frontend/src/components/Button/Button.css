@@ -1,0 +1,27 @@
+/* src/components/Button/Button.css */
+.btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover { box-shadow: var(--shadow-md); }
+
+.btn-secondary { background: #e7eef7; color: #123; }
+.btn-secondary:hover { box-shadow: var(--shadow-md); }
+
+.btn-ghost { background: transparent; color: var(--brand); box-shadow: none; }
+.btn-ghost:hover { background: rgba(56,97,251,0.08); }
+
+.btn-sm { font-size: 0.85rem; padding: 8px 12px; }
+.btn-md { font-size: 0.95rem; padding: 10px 16px; }
+.btn-lg { font-size: 1.05rem; padding: 12px 18px; }
+
+.btn-full { width: 100%; }

@@ -1,0 +1,70 @@
+/* Parent to center card */
+.hash-page-center {
+  min-height: calc(100vh - 72px); /* keeps center on screen */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #DCDCDC;
+  padding: 24px;
+}
+
+/* Actual card */
+.hash-container {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
+  padding: 24px;
+  height: auto;   /*shrink to content */
+}
+
+/* Header */
+.hash-container h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  color: #111827;
+}
+
+/* Form layout */
+.form-grid {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.form-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
+
+.hash-textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  resize: vertical;
+  font-size: 15px;
+  font-family: monospace;
+}
+
+.hash-textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Button area */
+.form-actions {
+  margin-top: 8px;
+}
+
+.form-msg {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #0f766e;
+}

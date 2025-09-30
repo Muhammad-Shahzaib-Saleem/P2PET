@@ -1,0 +1,45 @@
+.execution-page-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.execution-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 0rem 1.5rem 1.5rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.execution-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.form-actions {
+  margin-top: 0.75rem;
+  display: flex;
+}
+
+.form-btn {
+  flex: 1;
+  text-align: center;
+}
+
+.form-msg {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.form-grid h2 {
+  margin: 0 0 0.5rem 0;   /* remove top space, keep small bottom space */
+}

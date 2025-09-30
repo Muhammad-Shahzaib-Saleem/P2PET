@@ -1,0 +1,106 @@
+/* Center the form on the page (below the navbar) */
+.trade-page-center {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #DCDCDC;
+}
+
+/* Card base (you already had something similar) */
+.card.trade-card {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
+  padding: 24px;
+}
+
+.card-head h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+  color: #111827;
+}
+
+.card-head .help {
+  display: block;
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.form-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
+
+.form-row select,
+.form-row input[type="number"] {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  font-size: 15px;
+}
+
+.form-row select:focus,
+.form-row input[type="number"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Number field with steppers */
+.number-field {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  gap: 8px;
+  align-items: center;
+}
+
+.number-input {
+  text-align: center;
+}
+
+/* Small +/- buttons */
+.stepper-btn {
+  height: 40px;
+  width: 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f3f4f6;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+}
+
+.stepper-btn:hover {
+  background: #e5e7eb;
+}
+
+.stepper-btn:active {
+  transform: translateY(1px);
+}
+
+.form-actions {
+  margin-top: 8px;
+}
+
+.form-msg {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #0f766e;
+}

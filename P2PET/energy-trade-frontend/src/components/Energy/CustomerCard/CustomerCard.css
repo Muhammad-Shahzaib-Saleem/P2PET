@@ -1,0 +1,43 @@
+.cc-card { 
+    background:#fff; 
+    border-radius:14px; 
+    box-shadow:0 4px 18px rgba(0,0,0,.06); 
+    padding:0.5rem 0.75rem; 
+    min-height: 220px;
+}
+
+.cc-header { 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    padding-bottom:.25rem; 
+    border-bottom:1px solid rgba(0,0,0,.06); 
+    margin-bottom:.5rem; 
+}
+
+.cc-header h3 { 
+    margin:0; 
+    font-size:1rem; 
+    font-weight:700; 
+}
+
+.cc-body { 
+    padding-top:.25rem; 
+}
+
+.cc-grid2 { 
+    display:grid; 
+    grid-template-columns:1fr 1fr; 
+    gap:.75rem; 
+}
+
+@media (max-width:700px){ .cc-grid2{ grid-template-columns:1fr; } }
+.cc-label { 
+    font-size:.8rem; 
+    opacity:.7; 
+    margin-bottom:.15rem; 
+}
+
+.cc-value { 
+    font-weight:600; 
+}

@@ -1,0 +1,90 @@
+.sidebar-section {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.sidebar-section-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-section-header .arrow {
+  opacity: 0; /* hidden by default */
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-section-header:hover .arrow {
+  opacity: 1; /* show arrow on hover */
+}
+
+.sidebar-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+
+/* src/components/Sidebar/Sidebar.css */
+.sidebar {
+  width: 220px;
+  background: #1c1f2e;
+  color: #fff;
+  padding: 20px;
+  height: 100vh;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sidebar-item:hover {
+  background: #2d3248;
+}
+
+.sidebar-item.active {
+  background: #3a57ff;
+}
+
+.sidebar-link.active {
+  font-weight: bold;
+  color: #75b0ef;
+}
+
+.sidebar-link {
+  display: block;
+  color: white;
+  text-decoration: none; 
+}
+
+.sidebar-section + .sidebar-section { margin-top: 1rem; }
+.sidebar-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.7;
+  padding: 0.25rem 1rem;
+  margin-bottom: 0.25rem;
+}

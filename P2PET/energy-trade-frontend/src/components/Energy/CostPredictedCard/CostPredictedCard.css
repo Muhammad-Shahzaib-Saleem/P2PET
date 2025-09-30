@@ -1,0 +1,85 @@
+.cpc-card {
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 4px 18px rgba(0,0,0,.06);
+    padding:0.5rem 0.75rem;
+    overflow: hidden;
+    min-height: 220px;
+}
+
+.cpc-header { 
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center; 
+    padding-bottom:.25rem; 
+    border-bottom:1px solid rgba(0,0,0,.06); 
+    margin-bottom:.5rem; 
+}
+
+.cpc-header h3 {
+     margin:0; 
+    font-size:1rem; 
+    font-weight:700; 
+}
+
+.cpc-body { 
+    padding-top:.25rem; 
+}
+
+.cpc-pie-wrap { 
+    display:grid; 
+    grid-template-columns:1.6fr 1fr; 
+    gap:.5rem; 
+    align-items:center; 
+    min-height: 150px; 
+}
+
+@media (max-width:700px){ .cpc-pie-wrap { grid-template-columns:1fr; } }
+.cpc-total { 
+    display:flex; 
+    flex-direction:column; 
+    align-items:center; 
+    gap:.25rem; 
+}
+
+.cpc-total-label { 
+    font-size:.85rem; 
+    opacity:.7; 
+}
+
+.cpc-total-value { 
+    font-size: 1.15rem; 
+    font-weight:800; 
+}
+
+.cpc-pill { 
+    font-size:.75rem; 
+    padding:.25rem .5rem; 
+    border-radius:999px; 
+    background:#eef2ff; 
+    color:#3730a3; 
+    border:1px solid #e0e7ff; 
+}
+
+.cpc-tooltip {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 20px rgba(0,0,0,.08);
+  padding: .5rem .6rem;
+  border-radius: 10px;
+  font-size: .9rem;
+}
+
+.cpc-tooltip .row {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  line-height: 1.15rem;
+}
+
+.cpc-tooltip .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
