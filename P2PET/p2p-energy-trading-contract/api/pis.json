@@ -1,0 +1,92 @@
+[
+  {
+    "host": "pi_1",
+    "hostname": "192.168.0.154",
+    "user": "pi-1"
+  },
+  {
+    "host": "pi_2",
+    "hostname": "192.168.0.111",
+    "user": "pi"
+  },
+  {
+    "host": "pi_3",
+    "hostname": "192.168.0.167",
+    "user": "pi"
+  },
+  {
+    "host": "pi_3LapEth",
+    "hostname": "192.168.0.166",
+    "user": "pi"
+  },
+  {
+    "host": "pi_4",
+    "hostname": "192.168.0.137",
+    "user": "pi"
+  },
+  {
+    "host": "pi_4Ethernet",
+    "hostname": "192.168.0.136",
+    "user": "pi"
+  },
+  {
+    "host": "pi_5",
+    "hostname": "192.168.0.192",
+    "user": "pi"
+  },
+  {
+    "host": "pi_6",
+    "hostname": "192.168.0.152",
+    "user": "pi"
+  },
+  {
+    "host": "pi_7",
+    "hostname": "192.168.0.171",
+    "user": "pi-7"
+  },
+  {
+    "host": "pi_7OldEth",
+    "hostname": "192.168.0.170",
+    "user": "pi-7"
+  },
+  {
+    "host": "pi_8",
+    "hostname": "192.168.0.133",
+    "user": "pi"
+  },
+  {
+    "host": "pi_9",
+    "hostname": "192.168.0.110",
+    "user": "pi"
+  },
+  {
+    "host": "pi_10",
+    "hostname": "192.168.0.152",
+    "user": "pi"
+  },
+  {
+    "host": "pi_11",
+    "hostname": "100.120.139.128",
+    "user": "pi"
+  },
+  {
+    "host": "pi_12",
+    "hostname": "100.92.186.73",
+    "user": "pi"
+  },
+  {
+    "host": "pi_14",
+    "hostname": "100.120.196.113",
+    "user": "pi"
+  },
+  {
+    "host": "pi_15",
+    "hostname": "100.110.53.19",
+    "user": "pi"
+  },
+  {
+    "host": "pi_13",
+    "hostname": "100.80.11.48",
+    "user": "pi"
+  }
+]

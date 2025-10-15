@@ -87,19 +87,41 @@ def create_account(passwd, datadir, node_num):
     out_file.write(child.before.decode('unicode_escape')) 
 
 def scp_distribution(command, prompt_expected, prompt_password):
-    """This method is used distribute files to Raspberry Pis using secure copy (scp) command"""
+    """Distribute files to Raspberry Pis using scp with automatic first-time host confirmation."""
 
     import pexpect
 
-    # Spawn a child process
-    child = pexpect.spawn(command)
+    child = pexpect.spawn(command, encoding='utf-8', timeout=60)
+    try:
+        i = child.expect([
+            "Are you sure you want to continue connecting (yes/no/[fingerprint])?",
+            prompt_expected,
+            pexpect.EOF,
+            pexpect.TIMEOUT
+        ])
 
-    # Wait for the password prompt and send the password
-    child.expect(prompt_expected)
-    child.sendline(prompt_password)
+        if i == 0:
+            # First-time SSH connection — confirm fingerprint
+            child.sendline("yes")
+            child.expect(prompt_expected)
+            child.sendline(prompt_password)
+        elif i == 1:
+            # Got password prompt directly
+            child.sendline(prompt_password)
+        elif i == 2:
+            # Completed without needing password (possible with keys)
+            pass
+        elif i == 3:
+            print("⚠️ SCP connection timed out.")
+            print(child.before)
 
-    # Wait for the process to complete
-    child.expect(pexpect.EOF)
+        child.expect(pexpect.EOF)
+        print("✅ SCP transfer completed successfully.")
+    except pexpect.EOF:
+        print("⚠️ SCP ended unexpectedly (EOF).")
+    except pexpect.TIMEOUT:
+        print("⏰ SCP operation timed out.")
+
 
 def extract_acc_public_keys(file_path):
     texts_dict = {}

@@ -1,5 +1,5 @@
 # List of specific Raspberry Pi nodes to run the blockchain on
-nodes_to_run = [2, 3, 4, 5]
+nodes_to_run = [11,12,13,14,15]
 # nodes_to_run = [1, 2, 3, 4]
 
 # Mapping of node number to IP addresses
@@ -13,7 +13,12 @@ ip_dict = {
     7: '192.168.0.170',
     8: '192.168.0.133',
     9: '192.168.0.110',
-    10: '192.168.0.152'
+    10: '192.168.0.152',
+    11: '100.120.139.128',
+    12: '100.92.186.73',
+    13: '100.80.11.48',
+    14: '100.120.196.113',
+    15: '100.110.53.19'
 }
 
 if __name__ == "__main__":
@@ -120,11 +125,11 @@ if __name__ == "__main__":
 
         if is_raspberrypi:
             try:
-                execute_remotely(["cd ~", "cd P2PET", "./del_junk.sh", "./del_junk.sh"], "pi", ip_dict[node_number], pi_password)
-                command = f"scp -r node{i}/ pi@{ip_dict[node_number]}:/home/pi/P2PET"
+                execute_remotely(["cd ~", "cd /home/pi/Desktop/P2PET_Dynamic/P2PET/quorum-ibft-chain", "./del_junk.sh", "./del_junk.sh"], "pi", ip_dict[node_number], pi_password)
+                command = f"scp -r node{i}/ pi@{ip_dict[node_number]}:/home/pi/Desktop/P2PET_Dynamic/P2PET/quorum-ibft-chain"
                 prompt_expected = f"pi@{ip_dict[node_number]}'s password: "
                 scp_distribution(command, prompt_expected, pi_password)
-                execute_remotely(["cd ~", f"cd P2PET/node{i}", f"./startnode{i}.sh"], "pi", ip_dict[node_number], pi_password)
+                execute_remotely(["cd ~", f"cd /home/pi/Desktop/P2PET_Dynamic/P2PET/quorum-ibft-chain/node{i}", f"./startnode{i}.sh"], "pi", ip_dict[node_number], pi_password)
             except:
                 shellRun("./del_junk.sh")
                 raise ConnectionError(f"Raspberry Pi node {node_number} is off/not accessible!")
