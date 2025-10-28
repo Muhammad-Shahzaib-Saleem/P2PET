@@ -1,12 +1,16 @@
 // src/components/Navbar/Navbar.jsx
 import React, { useState } from "react";
-import "./Navbar.css";
+import { Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import Button from "../Button/Button";
 import { registerParticipant } from "../../api/api";
-import { Menu } from "lucide-react";
 
-const Navbar = ({ onToggleSidebar }) => {
+import "./Navbar.css";
+
+const Navbar = ({ onToggleSidebar, showToggle = true }) => {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleRegister = async () => {
     try {
@@ -21,21 +25,38 @@ const Navbar = ({ onToggleSidebar }) => {
     }
   };
 
+  const handleLogoClick = () => {
+    navigate("/");
+  };
+
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${showToggle ? "" : "navbar--no-toggle"}`}>
       <div className="nav-left">
-        {/* Sidebar Toggle Button */}
-        <button className="toggle-btn" onClick={onToggleSidebar}>
-          <Menu size={24} />
-        </button>
+        {showToggle && (
+          <button
+            className="toggle-btn"
+            onClick={onToggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <Menu size={24} />
+          </button>
+        )}
 
-        <img src="/logo.png" alt="Logo" className="logo-img" />
-        <h1 className="brand">Energy Trade DApp</h1>
+        <div
+          className="brand-container"
+          onClick={handleLogoClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && handleLogoClick()}
+        >
+          <img src="/logo.png" alt="Logo" className="logo-img" />
+          <h1 className="brand">Energy Trade DApp</h1>
+        </div>
       </div>
 
-      <div className="nav-right">
+      {/* <div className="nav-right">
         <Button text="Register" onClick={handleRegister} loading={loading} />
-      </div>
+      </div> */}
     </nav>
   );
 };

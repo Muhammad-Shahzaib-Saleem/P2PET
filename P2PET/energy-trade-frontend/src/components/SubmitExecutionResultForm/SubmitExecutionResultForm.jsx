@@ -1,20 +1,26 @@
 import React, { useState } from "react";
-import { submitExecutionResult, /*getExecutionResult*/ } from "../../api/api";
+import { submitExecutionResult } from "../../api/api";
 import Button from "../Button/Button";
 import "./SubmitExecutionResultForm.css";
 
 const SubmitExecutionResultForm = () => {
+  const [hostname, setHostname] = useState("");
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
   const [msg, setMsg] = useState("");
   const [result, setResult] = useState(null);
 
   const handleSubmitExecution = async () => {
+    if (!hostname.trim()) {
+      setMsg("Please enter hostname before submitting.");
+      return;
+    }
+
     setLoadingSubmit(true);
     setMsg("");
     setResult(null);
     try {
-      const res = await submitExecutionResult();
+      const res = await submitExecutionResult({ hostname });
       setResult(res);
       setMsg(res.message || "Execution result submitted successfully.");
     } catch (err) {
@@ -25,27 +31,26 @@ const SubmitExecutionResultForm = () => {
     }
   };
 
-  const handleViewExecution = async () => {
-    setLoadingFetch(true);
-    setMsg("");
-    try {
-      const res = await getExecutionResult();
-      setResult(res);
-      setMsg("Execution result fetched successfully.");
-    } catch (err) {
-      console.error(err);
-      setMsg("Failed to fetch execution result.");
-    } finally {
-      setLoadingFetch(false);
-    }
-  };
-
   return (
     <div className="execution-page-center">
-      <div className="card execution-card">
+      <div className="card-execution-card">
         <div className="form-grid">
+          <h2>Submit Execution Hash</h2>
+
+          {/* 🟢 Hostname Field */}
           <div className="form-row">
-            <h2>Submit Execution Hash</h2>
+            <label>Hostname</label>
+            <input
+              type="text"
+              placeholder="Enter hostname"
+              value={hostname}
+              onChange={(e) => setHostname(e.target.value)}
+              className="form-input"
+            />
+          </div>
+
+          {/* 🟢 Execution Result Field */}
+          <div className="form-row">
             <label>Execution Result</label>
             <textarea
               className="execution-textarea"
@@ -59,18 +64,13 @@ const SubmitExecutionResultForm = () => {
             />
           </div>
 
+          {/* 🟢 Buttons */}
           <div className="form-actions">
             <Button
               onClick={handleSubmitExecution}
               text={loadingSubmit ? "Submitting..." : "Submit Execution Result"}
               disabled={loadingSubmit || loadingFetch}
               className="form-btn primary-btn"
-            />
-            <Button
-              onClick={handleViewExecution}
-              text={loadingFetch ? "Fetching..." : "View Execution Result"}
-              disabled={loadingSubmit || loadingFetch}
-              className="form-btn secondary-btn"
             />
           </div>
         </div>

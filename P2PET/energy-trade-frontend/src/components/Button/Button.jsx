@@ -6,7 +6,7 @@ const Button = ({
   text,
   type = "button",
   onClick,
-  variant = "primary", // primary | secondary | ghost
+  variant = "primary", // primary | secondary | danger
   size = "md", // sm | md | lg
   loading = false,
   disabled = false,

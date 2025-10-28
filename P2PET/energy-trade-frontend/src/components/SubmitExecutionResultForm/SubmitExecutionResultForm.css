@@ -2,11 +2,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 70vh;
+  /* min-height: 70vh; */
+  height: 100%;
   padding: 1rem;
 }
 
-.execution-card {
+.card-execution-card {
   width: 100%;
   max-width: 600px;
   padding: 1.5rem;
@@ -20,20 +21,22 @@
 }
 
 .form-row {
-  margin-bottom: 1rem;
+  margin-bottom: 1px;
 }
 
 .form-row label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1px;
   font-weight: 600;
   color: #333;
 }
 
 .execution-textarea {
   width: 100%;
-  min-height: 100px;
-  padding: 0.75rem;
+  /* min-height: 100px; */
+  /* height: 100%; */
+  height: auto;
+  padding: 6px;
   border-radius: 6px;
   border: 1px solid #ddd;
   font-size: 0.9rem;
@@ -51,6 +54,8 @@
   display: flex;
   gap: 0.75rem;
   width: 100%; /* Ensure it takes full width */
+  margin-top: 1px;
+  flex-wrap: wrap;
 }
 
 .form-btn {
@@ -66,6 +71,7 @@
   /* Ensure buttons take exactly 50% each */
   flex-basis: 50%;
   box-sizing: border-box;
+  font-size: 1rem;
 }
 
 .form-btn:disabled {
@@ -108,4 +114,38 @@
 
 .form-grid h2 {
   margin: 0 0 0.5rem 0;   /* remove top space, keep small bottom space */
+}
+
+/* --- mobile sizing --- */
+@media (max-width: 480px) {
+  .card-execution-card { padding: 1rem; }
+
+  .form-grid h2 { font-size: 1.1rem; }
+  .form-row label { font-size: 0.95rem; }
+
+  .execution-textarea {
+    min-height: 110px;
+    font-size: 0.9rem;
+  }
+
+  .form-actions { gap: 0.5rem; }
+
+  .form-btn {
+    padding: 0.6rem 0.75rem;  /* smaller button height */
+    font-size: 0.9rem;        /* smaller button text */
+    border-radius: 5px;
+  }
+}
+
+@media (max-height: 700px) {
+  .execution-page-center {
+    align-items: flex-start;  /* stop vertical centering */
+    padding: 12px;
+    max-height: none;
+    overflow: visible;
+  }
+  .card-execution-card {
+    width: min(96vw, 560px);
+    padding: 16px;
+  }
 }

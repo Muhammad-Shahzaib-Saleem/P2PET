@@ -3,7 +3,8 @@
     border-radius:14px; 
     box-shadow:0 4px 18px rgba(0,0,0,.06); 
     padding:0.5rem 0.75rem; 
-    min-height: 220px;
+    /* min-height: 220px; */
+    height: 100%;
 }
 
 .cc-header { 
@@ -32,6 +33,14 @@
 }
 
 @media (max-width:700px){ .cc-grid2{ grid-template-columns:1fr; } }
+
+@media (max-width: 600px){
+  .cc-card{ padding:.45rem .6rem; }
+  .cc-header h3{ font-size:.95rem; }
+  .cc-label{ font-size:.75rem; }
+  .cc-value{ font-size:.95rem; }
+}
+
 .cc-label { 
     font-size:.8rem; 
     opacity:.7; 

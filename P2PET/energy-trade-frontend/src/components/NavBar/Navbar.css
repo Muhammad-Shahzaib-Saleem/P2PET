@@ -13,10 +13,14 @@
   box-shadow: var(--shadow-lg);
 }
 
+/* When there is no toggle, nothing special needed; this class is here
+   if you later want different spacing (e.g., different padding) */
+/* .navbar--no-toggle { optional tweaks } */
+
 .nav-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 10px; /* space between toggle and brand */
 }
 
 .toggle-btn {
@@ -28,24 +32,17 @@
   display: flex;
   align-items: center;
 }
+.toggle-btn:hover { color: #7b9dff; }
 
-.toggle-btn:hover {
-  color: #7b9dff;
-}
-
-.logo-img {
-  height: 40px;
-  margin-right: 10px;
-}
-
-.brand {
-  font-size: 1.05rem;
-  margin: 0;
-  letter-spacing: 0.2px;
-}
-
-.nav-right {
+.brand-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
 }
+.brand-container:hover { opacity: 0.8; }
+
+.logo-img { height: 40px; margin-right: 10px; }
+.brand { font-size: 1.05rem; margin: 0; letter-spacing: 0.2px; }
+
+.nav-right { display: flex; align-items: center; gap: 8px; }

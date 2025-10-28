@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi"; // arrow icons
+
 import "./Sidebar.css";
 
 const Sidebar = () => {
@@ -12,11 +13,13 @@ const Sidebar = () => {
       title: "Transactions",
       key: "transactions",
       items: [
-        { key: "submit", label: "Submit Data", path: "/" },
+        { key: "register", label: "Register Node", path: "/register-node" },
+        { key: "submit", label: "Submit Data", path: "/submit-data" },
         { key: "hash", label: "Hash Participant", path: "/hash-participant" },
         { key: "execution", label: "Submit Execution Result", path: "/submit-execution-result" },
+        { key: "advance", label: "Advance Phase", path: "/advance-phase" },
         { key: "verify", label: "Verify Execution Result", path: "/verify-execution-result" },
-        { key: "network", label: "Network Statistics", path: "/network-status" },
+        { key: "network", label: "Market Status", path: "/network-status" },
       ],
     },
     {
@@ -77,56 +80,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-
-// // src/components/Sidebar/Sidebar.jsx
-// import React from "react";
-// import { NavLink } from "react-router-dom";
-// import "./Sidebar.css";
-
-// const Sidebar = () => {
-//   const sections = [
-//     {
-//       title: "Transactions",
-//       items: [
-//         { key: "submit", label: "Submit Data", path: "/" },
-//         { key: "hash", label: "Hash Participant", path: "/hash-participant" },
-//         { key: "execution", label: "Submit Execution Result", path: "/submit-execution-result" },
-//         { key: "verify", label: "Verify Execution Result", path: "/verify-execution-result" },
-//         { key: "network", label: "Network Statistics", path: "/network-status" },
-//       ],
-//     },
-//     {
-//       title: "Energy",
-//       items: [
-//         { key: "energy-dashboard", label: "Energy Dashboard", path: "/energy-dashboard" },
-//       ],
-//     },
-//   ];
-
-//   return (
-//     <aside className="sidebar">
-//       <h2 className="sidebar-title">Menu</h2>
-
-//       {sections.map((section) => (
-//         <div className="sidebar-section" key={section.title}>
-//           <div className="sidebar-section-title">{section.title}</div>
-//           <ul className="sidebar-list">
-//             {section.items.map((item) => (
-//               <li key={item.key} className="sidebar-item">
-//                 <NavLink
-//                   to={item.path}
-//                   className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}
-//                   end={item.path === "/"}
-//                 >
-//                   {item.label}
-//                 </NavLink>
-//               </li>
-//             ))}
-//           </ul>
-//         </div>
-//       ))}
-//     </aside>
-//   );
-// };
-
-// export default Sidebar;

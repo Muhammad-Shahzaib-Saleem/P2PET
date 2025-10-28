@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+
 import { fetchEnergyDashboard } from "../../../api/energy";
 import CustomerCard from "../CustomerCard/CustomerCard";
 import CostPredictedCard from "../CostPredictedCard/CostPredictedCard";
 import ChartsTabs from "../ChartsTabs/ChartsTabs";
+
 import "./EnergyDashboardView.css";
 
 // Set your real tariffs or read them from the payload (see below)

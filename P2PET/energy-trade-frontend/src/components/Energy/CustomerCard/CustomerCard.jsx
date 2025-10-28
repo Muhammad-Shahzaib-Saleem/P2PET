@@ -1,4 +1,5 @@
 import React from "react";
+
 import "./CustomerCard.css";
 
 const CustomerCard = ({ data }) => {

@@ -1,3 +1,4 @@
+#source ../../pi-venv/bin/activate
 import subprocess
 from eth_account import Account
 import os, time
@@ -11,23 +12,79 @@ from fastapi import FastAPI, HTTPException
 import sys
 from dotenv import load_dotenv
 from fetch_and_match import run_matching_and_get_hash
+from pathlib import Path
+import paramiko
+from fastapi.middleware.cors import CORSMiddleware
+
+
 
 load_dotenv()
 
 # app
 app = FastAPI(title="P2P Energy Trading API")
 
-# Get local IP address and build RPC_URL properly
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-try:
-    s.connect(('192.168.0.1', 1))
-    ip_address = s.getsockname()[0]
-finally:
-    s.close()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or specify ["http://localhost:5173"] for stricter control
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-RPC_URL = f"http://{ip_address}:22000"
-LOCAL_RPC_URL = "http://127.0.0.1:22000"
-LOCAL_PRIVATE_KEY = os.getenv("PRIVATE_KEY")
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('192.168.0.1', 80))
+        return s.getsockname()[0]
+    finally:
+        s.close()
+
+ip_address = get_local_ip()
+
+with open("NodeNum.txt", "r") as f:
+    node_number = int(f.read().strip())
+
+rpc_port_num = 22000
+
+import json
+
+def get_pi_hostname(host, file_path='pis.json'):
+    """
+    Given a host name, return its hostname and user from pis.json.
+    
+    Args:
+        host (str): The host key (e.g., "pi_1", "pi_4Ethernet").
+        file_path (str): Path to the pis.json file.
+    
+    Returns:
+        dict: A dictionary with 'hostname' and 'user' if found, else None.
+    """
+    try:
+        with open(file_path, 'r') as f:
+            pis = json.load(f)
+
+        for pi in pis:
+            if pi['host'] == host:
+                return {"hostname": pi['hostname']}
+        
+        print(f"Host '{host}' not found in {file_path}")
+        return None
+
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error: '{file_path}' is not a valid JSON file.")
+        return None
+
+
+
+
+RPC_URL = f"http://{'100.110.53.19'}:{str(rpc_port_num+node_number)}"
+
+# RPC_URL = f"https://100.110.53.19:22004"
+# LOCAL_RPC_URL = "https://127.0.0.1:22000"
+# LOCAL_PRIVATE_KEY = os.getenv("PRIVATE_KEY")
 
 CONTRACT_ADDRESS_PATH = os.getenv("CONTRACT_ADDRESS_PATH")
 ABI_PATH = os.getenv("ABI_PATH")
@@ -40,6 +97,7 @@ keystore = subprocess.check_output(
 ).strip()
 
 ACCOUNT_PASSWORD = os.getenv("ACCOUNT_PASSWORD")
+PI_PASSWORD = "Lums12345"
 
 
 with open(CONTRACT_ADDRESS_PATH, "r") as f:
@@ -58,7 +116,8 @@ except Exception as e:
     raise RuntimeError(f"Failed to decrypt private key: {e}")
 
 # Web3 instance
-w3 = Web3(Web3.HTTPProvider(LOCAL_RPC_URL))
+# Web3 instance
+w3 = Web3(Web3.HTTPProvider(RPC_URL))
 w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 # Set up account
@@ -67,6 +126,128 @@ sender_address = account.address
 
 # Contract instance
 contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=abi)
+
+
+
+
+
+def get_dynamic_private_key(node_number, base_dir="/home/pi/Desktop/P2PET_Dynamic/P2PET/quorum-ibft-chain",
+                             account_password=ACCOUNT_PASSWORD, remote_host=None, remote_user="pi", remote_password=PI_PASSWORD):
+    """
+    Decrypts and returns the private key for a given node number.
+    Works locally or remotely (via SSH with password authentication).
+    """
+    try:
+        node_path = Path(base_dir) / f"node{node_number}" / "data" / "keystore"
+
+        # --- 🔹 Remote access using paramiko (no password prompt) ---
+        if remote_host:
+            print(f"🔄 Fetching keystore from remote Pi: {remote_host}")
+
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(remote_host, username=remote_user, password=remote_password)
+
+            # Get keystore filename
+            stdin, stdout, stderr = ssh.exec_command(f"ls {node_path} | head -n 1")
+            keystore_filename = stdout.read().decode().strip()
+            if not keystore_filename:
+                raise FileNotFoundError(f"No keystore file found at {node_path}")
+
+            # Read keystore content directly (no file saving)
+            stdin, stdout, stderr = ssh.exec_command(f"cat {node_path}/{keystore_filename}")
+            keystore_content = stdout.read().decode()
+            ssh.close()
+
+        # --- 🔹 Local mode ---
+        else:
+            keystore_files = list(node_path.glob("*"))
+            if not keystore_files:
+                raise FileNotFoundError(f"No keystore files found in {node_path}")
+            with open(keystore_files[0], "r") as f:
+                keystore_content = f.read()
+
+        # --- 🔹 Decrypt private key ---
+        private_key_bytes = Account.decrypt(keystore_content, account_password)
+        private_key_hex = private_key_bytes.hex()
+        print(f"✅ Successfully decrypted private key for node{node_number}")
+
+        return private_key_hex
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to get private key for node {node_number}: {e}")
+
+dynamic_private_key=get_dynamic_private_key(2, remote_host="100.120.199.1")
+print("Private Key",dynamic_private_key)
+
+# def get_dynamic_private_key(node_number, keystore_base_path="../../quorum-ibft-chain/node", account_password=ACCOUNT_PASSWORD):
+#     """Decrypts and returns the private key for a given node number."""
+#     try:
+#         keystore_path = f"{keystore_base_path}{node_number}/data/keystore"
+#         keystore_file = subprocess.check_output(
+#             f"ls {keystore_path} | head -n 1",
+#             shell=True,
+#             text=True
+#         ).strip()
+        
+#         with open(f"{keystore_path}/{keystore_file}", "r") as f:
+#             keystore = f.read()
+        
+#         private_key_bytes = Account.decrypt(keystore, account_password)
+#         return private_key_bytes.hex()
+    
+#     except Exception as e:
+#         raise RuntimeError(f"Failed to get private key for node {node_number}: {e}")
+
+def get_web3_rpc(hostname, pis_json_path="pis.json"):
+    """Creates a Web3 connection and contract instance dynamically using pis.json."""
+    try:
+        # Load pis.json
+        with open(pis_json_path, "r") as f:
+            pis_data = json.load(f)
+
+        # Ensure hostname exists in pis.json
+        if hostname not in pis_data:
+            raise HTTPException(status_code=404, detail=f"Hostname {hostname} not found in pis.json")
+
+        node_info = pis_data[hostname]
+        node_number = node_info["node_num"]
+        node_hostname = node_info["hostname"]
+
+        # Build dynamic RPC URL
+        RPC_URL = f"http://{node_hostname}:{rpc_port_num + node_number}"
+        print(f"Connecting to RPC: {RPC_URL}")
+
+        # Connect to Web3
+        w3 = Web3(Web3.HTTPProvider(RPC_URL))
+        w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+
+        if not w3.is_connected():
+            raise Exception(f"Cannot connect to {RPC_URL}")
+
+
+        # Get dynamic private key
+        dynamic_private_key = get_dynamic_private_key(node_number, remote_host=node_hostname)  
+
+        # Load sender account
+        account = w3.eth.account.from_key(dynamic_private_key)
+        sender_address = account.address
+
+        # Load contract instance
+        contract = w3.eth.contract(
+            address=Web3.to_checksum_address(CONTRACT_ADDRESS),
+            abi=abi
+        )
+
+        print(f"Connected successfully to node {node_number} ({hostname})")
+        return w3, contract, sender_address,dynamic_private_key
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="pis.json file not found")
+    except KeyError as e:
+        raise HTTPException(status_code=500, detail=f"Missing key in pis.json: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error initializing Web3: {e}")
 
 
 def send_transaction(function_call):
@@ -110,19 +291,68 @@ def send_transaction(function_call):
 
     return receipt
 
+def send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key):
+    """Sends a transaction to the blockchain."""
+    try:
+        nonce = w3.eth.get_transaction_count(sender_address)
+
+        tx = function_call.build_transaction({
+            'from': sender_address,
+            'nonce': nonce,
+            'gas': 500000,
+            'gasPrice': 0
+        })
+
+        signed_tx = w3.eth.account.sign_transaction(tx, dynamic_private_key)
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+        print(f"Transaction sent: {tx_hash.hex()} — waiting for receipt...")
+        receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+        if receipt.status == 0:
+            print("Transaction failed.")
+            try:
+                tx_call = {
+                    'to': tx['to'],
+                    'from': sender_address,
+                    'data': tx['data'],
+                    'gas': tx['gas']
+                }
+                revert_msg = w3.eth.call(tx_call, block_identifier=receipt.blockNumber)
+                print("Unknown failure reason.")
+            except ContractLogicError as e:
+                message = str(e)
+                if message.startswith("execution reverted:"):
+                    clean_msg = message.split("execution reverted:")[1].strip()
+                    print(f"Revert reason: {clean_msg}")
+                else:
+                    print(f"Revert reason: {message}")
+            except Exception as e:
+                print(f"Failed to decode revert reason: {e}")
+
+        return receipt
+
+    except Exception as e:
+        print(f"Error sending transaction: {e}")
+        raise HTTPException(status_code=500, detail=f"Error sending transaction: {e}")
+
+
+
+
 
 @app.get('/')
 def checking_contract():
     try:
-        return {"health":"ok","status": True,"version":"1.0.0","description":"This is P2P Energy trading contract api (Endoints)"}
+        return {"health":"ok","status": True,"version":"2.0.0","description":"This is P2P Energy trading contract api (Endoints)"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
+print("Contract Address:",CONTRACT_ADDRESS)
 @app.get('/contract')
 def checking_contract():
     try:
         return {"contractAddress": CONTRACT_ADDRESS,"status": True}
+    
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -132,6 +362,30 @@ def checking_contract():
         return {"Private Keys": PRIVATE_KEY,"status": True}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.get('/dynamic_private-key/{hostname}')
+def dynamic_key(hostname: str):
+    try:
+        _, _, _, dynamic_private_key = get_web3_rpc(hostname)
+        return {"Dynamic Private Key": dynamic_private_key, "status": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+
+@app.post("/dynamic_register")
+def register_participant(hostname: str):
+    """Registers participant dynamically based on Pi hostname."""
+    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
+    function_call = contract.functions.register()
+
+    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+
+    if receipt.status == 1:
+        return {"status": "success", "txHash": receipt.transactionHash.hex()}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
+
 
 
 @app.post("/register")
@@ -152,50 +406,141 @@ def submit_data(role:int, energy:int, price:int):
         raise HTTPException(status_code=400, detail="Transaction failed.")
 
 
-@app.post("/advance-phase")
-def advance_phase():
-    receipt = send_transaction(contract.functions.advancePhase())
+ROLE_MAP = {
+    "buyer": 1,
+    "seller": 2
+}
+
+SCALING_FACTOR = 100
+
+def scale(value):
+    return int(value * SCALING_FACTOR)
+
+@app.post("/dynamic_submit_data")
+def submit_data(hostname:str,role:str, energy:int, price:int):
+
+    role_normalized = role.strip().lower()
+    if role_normalized not in ROLE_MAP:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    role_int = ROLE_MAP[role_normalized]
+    energy_scaled = scale(energy)
+    price_scaled = scale(price)
+    
+    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
+    function_call = contract.functions.submitData(role_int, energy_scaled, price_scaled)
+    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
     if receipt.status == 1:
         return {"status": "success", "message": "Transaction successful."}
     else:
         raise HTTPException(status_code=400, detail="Transaction failed.")
 
 
-@app.post("/submit-execution-result")
-def submit_execution_result():
-    result_hash_hex = run_matching_and_get_hash(contract)
+@app.post("/Dynamic_hash_participants")
+def hash_participants(hostname:str):
+    try:
+        w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
+        
+        # Call the smart contract function
+        function_call = contract.functions.hashParticipantsList()
+        receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+        
 
-    if not result_hash_hex:
-        raise HTTPException(status_code=400, detail="No participants found or matching failed.")
+        # You can decode the hash from the transaction logs or call the contract again to get the updated value
+        latest_hash = contract.functions.previousHash().call()
 
-    receipt = send_transaction(
-        contract.functions.submitExecutionResult(Web3.to_bytes(hexstr=result_hash_hex))
-    )
+        if receipt.status == 1:
+            return {
+                "status": "success",
+                "message": "Hash calculated successfully.",
+                "computedHash": latest_hash.hex()
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Transaction failed.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+
+
+PHASE_NAMES = {
+    0: "DataSubmission",
+    1: "Execution",
+    2: "Trading"
+}
+
+@app.post("/dynamic_advance_phase")
+def advance_phase(hostname:str):
+    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
+    function_call = contract.functions.advancePhase()
+    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+    # receipt = send_transaction(contract.functions.advancePhase())
     if receipt.status == 1:
-        return {"status": "success", "message": "Transaction successful."}
+        # return {"status": "success", "message": "Transaction successful."}
+        current_phase = contract.functions.currentPhase().call()
+        current_round = contract.functions.currentRound().call()
+        phase_name = PHASE_NAMES.get(current_phase, f"Unknown({current_phase})")
+
+        return {
+            "status": "success",
+            "message": "Phase advanced successfully.",
+            "currentRound": current_round,
+            "phaseName": phase_name
+        }
     else:
         raise HTTPException(status_code=400, detail="Transaction failed.")
 
-# @app.post("/submit-execution-result")
-# def submit_execution_result(result: str):
-#     receipt = send_transaction(contract.functions.submitExecutionResult(Web3.keccak(text=result)))
-#     if receipt.status == 1:
-#         return {"status": "success", "message": "Transaction successful."}
-#     else:
-#         raise HTTPException(status_code=400, detail="Transaction failed.")
 
 
-@app.post("/verify-execution")
+@app.post("/dynamic_submit_execution_result")
+def dynamic_submit_execution_result(hostname: str):
+    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
+    participant_count, result_hash_hex = run_matching_and_get_hash(contract)
+
+    # Build bytes32-compatible hash
+    hash_bytes32 = Web3.to_bytes(hexstr="0x" + result_hash_hex)
+
+    function_call = contract.functions.submitExecutionResult(hash_bytes32)
+    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+
+    if receipt.status == 1:
+        return {
+            "status": "success",
+            "participants": participant_count,
+            "result_hash": f"0x{result_hash_hex}",
+            "txHash": receipt.transactionHash.hex()
+        }
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed")
+
+
+
+
+
+@app.post("/verify_execution")
 def verify_execution():
     receipt = send_transaction(contract.functions.verifyExecutionResult())
     if receipt.status == 1:
         return {"status": "success", "message": "Transaction successful."}
     else:
         raise HTTPException(status_code=400, detail="Transaction failed.")
+    
 
 
-@app.get("/total-participants")
+
+
+@app.post("/dynamic_verify_execution")
+def dynamic_verify_execution(hostname: str):
+    
+    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
+    
+    function_call = contract.functions.verifyExecutionResult()
+    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+    if receipt.status == 1:
+        return {"status": "success", "message": "Transaction successful."}
+    else:
+        raise HTTPException(status_code=400, detail="Transaction failed.")
+
+
+@app.get("/total_participants")
 def get_total_participants():
     try:
         value = contract.functions.TOTAL_PARTICIPANTS().call()
@@ -204,12 +549,14 @@ def get_total_participants():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/participants-list")
+
+
+@app.get("/participants_list")
 def get_participants_list():
     try:
         total = contract.functions.TOTAL_PARTICIPANTS().call()
         participants = []
-        for i in range(total):
+        for i in range(1,total):
             data = contract.functions.participantsList(i).call()
             participants.append(data)
         return {"participantsList": participants}
@@ -217,7 +564,7 @@ def get_participants_list():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/address-to-slot/{address}")
+@app.get("/address_to_slot/{address}")
 def get_address_to_slot(address: str):
     try:
         checksum_addr = Web3.to_checksum_address(address)
@@ -227,7 +574,7 @@ def get_address_to_slot(address: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/next-available-slot")
+@app.get("/next_available_slot")
 def get_next_available_slot():
     try:
         slot = contract.functions.nextAvailableSlot().call()
@@ -236,7 +583,7 @@ def get_next_available_slot():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/current-round")
+@app.get("/current_round")
 def get_current_round():
     try:
         round_num = contract.functions.currentRound().call()
@@ -245,7 +592,7 @@ def get_current_round():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/current-phase")
+@app.get("/current_phase")
 def get_current_phase():
     try:
         phase = contract.functions.currentPhase().call()
@@ -261,7 +608,7 @@ def get_current_phase():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/previous-hash")
+@app.get("/previous_hash")
 def get_previous_hash():
     try:
         phash = contract.functions.previousHash().call()
@@ -270,7 +617,7 @@ def get_previous_hash():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/previous-hash-execution")
+@app.get("/previous_hash_execution")
 def get_previous_hash_execution():
     try:
         phash_exec = contract.functions.previousHashExecution().call()
@@ -279,7 +626,7 @@ def get_previous_hash_execution():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/final-hash")
+@app.get("/final_hash")
 def get_final_hash():
     try:
         fhash = contract.functions.finalHash().call()
@@ -288,7 +635,7 @@ def get_final_hash():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/submitted-results")
+@app.get("/submitted_results")
 def get_submitted_results():
     try:
         results = []
@@ -303,7 +650,7 @@ def get_submitted_results():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/result-submission-count")
+@app.get("/result_submission_count")
 def get_result_submission_count():
     try:
         count = contract.functions.resultSubmissionCount().call()
@@ -312,7 +659,7 @@ def get_result_submission_count():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/has-submitted-result/{address}")
+@app.get("/has_submitted_result/{address}")
 def get_has_submitted_result(address: str):
     try:
         checksum_addr = Web3.to_checksum_address(address)
@@ -324,5 +671,21 @@ def get_has_submitted_result(address: str):
 
 
 if __name__ == "__main__":
+    
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import webbrowser
+
+    local_ip = get_local_ip()
+    print("\n🚀 P2P Energy Trading API running!")
+    print(f"   → Local Access:   http://localhost:8000")
+    print(f"   → Network Access: http://{local_ip}:8000\n")
+
+    # Optional: open in browser (comment out if not desired)
+    # webbrowser.open(f"http://{local_ip}:8000")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",  # allows both localhost and network access
+        port=8000,
+        reload=True
+    )

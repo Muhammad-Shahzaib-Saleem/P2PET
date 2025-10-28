@@ -1,0 +1,31 @@
+/* src/components/Auth/Auth.css */
+.auth-container {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  /* min-height: calc(100vh - 64px); */
+  height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.auth-box {
+  width: 420px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(16,24,40,0.08);
+  text-align:center;
+}
+
+.auth-box h2 { margin-bottom: 14px; }
+.auth-box form { display:flex; flex-direction:column; gap:12px; }
+.auth-box input { padding:10px 12px; border-radius:8px; border:1px solid #dfe7f3; }
+.auth-note { margin-top:12px; font-size:0.95rem; }
+
+@media (max-height: 700px) {
+  .auth-container { padding: 12px; }
+  .auth-box      { width: min(94vw, 380px); padding: 14px; }
+  .auth-box input { padding: 8px 10px; }
+  .auth-box h2    { font-size: 1.15rem; margin-bottom: 10px; }
+}

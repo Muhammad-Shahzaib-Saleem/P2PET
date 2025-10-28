@@ -1,0 +1,47 @@
+.meter-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.meter-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.meter-table thead th {
+  text-align: left;
+  font-size: 0.9rem;
+  padding: 12px 10px;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.meter-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Status pill */
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #fff;
+  display: inline-block;
+}
+
+.status-pill.active { background: #16a34a; }
+.status-pill.inactive { background: #6b7280; }

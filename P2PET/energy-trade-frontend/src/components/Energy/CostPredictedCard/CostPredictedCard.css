@@ -4,7 +4,8 @@
     box-shadow:0 4px 18px rgba(0,0,0,.06);
     padding:0.5rem 0.75rem;
     overflow: hidden;
-    min-height: 220px;
+    height: 100%;
+    /* min-height: 220px; */
 }
 
 .cpc-header { 
@@ -31,10 +32,30 @@
     grid-template-columns:1.6fr 1fr; 
     gap:.5rem; 
     align-items:center; 
-    min-height: 150px; 
+    height: 100%;
+    /* min-height: 150px;  */
 }
 
-@media (max-width:700px){ .cpc-pie-wrap { grid-template-columns:1fr; } }
+@media (max-width: 700px){
+  .cpc-pie-wrap{ grid-template-columns:1fr; }
+  .cpc-card{ padding:.5rem .6rem; }
+  .cpc-header h3{ font-size:.95rem; }
+  .cpc-pill{ font-size:.7rem; padding:.2rem .45rem; }
+  .cpc-total-label{ font-size:.8rem; }
+  .cpc-total-value{ font-size:1.05rem; }
+  /* keep the chart from being too tall on small phones */
+  .cpc-pie-wrap .recharts-responsive-container{ height:140px !important; }
+}
+@media (max-width: 700px) {
+  .cpc-card .recharts-legend-item-text { font-size: 10px !important; }
+  .cpc-card .recharts-legend-icon { transform: scale(0.8); }
+  .cpc-card .recharts-legend-wrapper { right: 4px !important; }
+}
+
+@media (max-width: 420px){
+  .cpc-pie-wrap .recharts-responsive-container{ height:120px !important; }
+}
+
 .cpc-total { 
     display:flex; 
     flex-direction:column; 
@@ -82,4 +103,42 @@
   height: 10px;
   border-radius: 999px;
   display: inline-block;
+}
+
+.cpc-legend-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.55rem;
+  margin-top:.25rem;
+  font-size:.8rem;
+}
+.cpc-legend-bottom .dot{
+  width:8px; height:8px; border-radius:999px; display:inline-block;
+}
+.cpc-legend-bottom .sep{ width:1px; height:12px; background:#e5e7eb; }
+
+.cpc-card .recharts-legend-item-text { 
+  font-size: 12px !important;         /* desktop */
+  line-height: 1.1;
+}
+
+.cpc-card .recharts-legend-icon { 
+  transform: scale(0.9);               /* smaller colored dot */
+  transform-origin: center;
+}
+
+.cpc-card .recharts-legend-wrapper { 
+  margin: 0; 
+  padding: 0; 
+}
+
+/* Slightly smaller on very small phones */
+@media (max-width: 400px){
+  .cpc-legend-bottom{ font-size:.75rem; gap:.45rem; }
+  .cpc-legend-bottom .dot{ width:7px; height:7px; }
+}
+@media (max-width: 400px) {
+  .cpc-card .recharts-legend-item-text { font-size: 9px !important; }
+  .cpc-card .recharts-legend-icon { transform: scale(0.75); }
 }

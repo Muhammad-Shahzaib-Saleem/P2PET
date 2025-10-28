@@ -1,31 +1,66 @@
+/* existing desktop styles… */
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;    /* prevent body scroll */
+  overflow: hidden;
 }
 
 .main-layout {
   display: flex;
   flex: 1;
+  min-height: 0;
   background-color: #f0f2f5;
   overflow: hidden;
 }
 
+/* Desktop sidebar (inline) stays as-is */
 .sidebar {
-  width: 250px; /* or whatever your sidebar width is */
+  width: 250px;
   background: #1c1f2e;
   border-right: 1px solid #ddd;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: 64px;
+  height: calc(100vh - 64px);
   flex-shrink: 0;
+  overflow-y: auto;
 }
 
+/* CONTENT */
 .content-area {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   padding: 20px;
-  background: #DCDCDC; /* grey background */
-  min-height: 100vh;
-  overflow-y: auto;
+  background: #DCDCDC;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+/* ===== Mobile drawer behavior ===== */
+@media (max-width: 920px) {
+  .main-layout.is-mobile .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    height: calc(100vh - 64px);
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1100;             /* above content */
+    border-right: none;
+    box-shadow: 2px 0 20px rgba(0,0,0,.3);
+  }
+
+  .main-layout.is-mobile.sidebar-open .sidebar {
+    transform: translateX(0);  /* slide in */
+  }
+
+  /* Dark backdrop behind the drawer */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 64px 0 0 0;         /* below navbar */
+    background: rgba(0,0,0,0.35);
+    z-index: 1050;
+  }
 }

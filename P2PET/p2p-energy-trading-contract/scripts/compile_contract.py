@@ -56,8 +56,57 @@ def main():
     save_abi(contract_interface["abi"], OUTPUT_DIR, ABI_FILENAME)
     save_bytecode(contract_interface["bin"], OUTPUT_DIR, BYTECODE_FILENAME)
     print("Compilation complete.")
+    print("abi: ", contract_interface["abi"])
 
 
 if __name__ == "__main__":
     main()
+
+
+# import json
+# from solcx import compile_standard, install_solc
+
+# # Step 1: Install the Solidity compiler version (0.8.0)
+# install_solc("0.8.0")
+
+# # Step 2: Load your Solidity contract
+# with open("../contracts/EnergyTrade.sol", "r") as file:
+#     contract_source_code = file.read()
+
+# # Step 3: Compile contract
+# compiled_sol = compile_standard(
+#     {
+#         "language": "Solidity",
+#         "sources": {"../contracts/EnergyTrade.sol": {"content": contract_source_code}},
+#         "settings": {
+#             "outputSelection": {
+#                 "*": {
+#                     "*": [
+#                         "abi",
+#                         "metadata",
+#                         "evm.bytecode",
+#                         "evm.sourceMap",
+#                     ]
+#                 }
+#             }
+#         },
+#     },
+#     solc_version="0.8.0",
+# )
+
+# # Step 4: Save compiled data to JSON (optional)
+# with open("compiled_P2PEnergyTrading.json", "w") as f:
+#     json.dump(compiled_sol, f, indent=4)
+
+# # Step 5: Extract contract interface
+# contract_interface = compiled_sol["contracts"]["../contracts/EnergyTrade.sol"]["EnergyTrade"]
+
+# # ABI and Bytecode
+# abi = contract_interface["abi"]
+# bytecode = contract_interface["evm"]["bytecode"]["object"]
+
+# # Print important info
+# print("✅ Contract compiled successfully!\n")
+# print("ABI:\n", json.dumps(abi, indent=2))
+# print("\nBYTECODE:\n", bytecode)
 

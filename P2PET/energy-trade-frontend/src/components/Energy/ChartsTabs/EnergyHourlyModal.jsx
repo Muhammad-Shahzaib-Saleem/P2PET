@@ -1,4 +1,5 @@
 import React from "react";
+
 import EnergyDualBar from "./EnergyDualBar";
 
 const EnergyHourlyModal = ({ open, dayLabel, rows, onClose }) => {

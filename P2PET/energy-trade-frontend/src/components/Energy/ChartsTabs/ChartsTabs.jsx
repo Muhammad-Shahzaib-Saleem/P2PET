@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+
 import ChartBase from "./ChartBase";
 import EnergyDualBar from "./EnergyDualBar";
 import EnergyHourlyModal from "./EnergyHourlyModal";
+
 import "./ChartsTabs.css";
 
 /* ------- frequency ticks helper ------- */
@@ -153,6 +155,8 @@ const buildWindowFromNow = (rows = [], tKey = "t", nowMs = Date.now()) => {
 /* ---------------- Component ---------------- */
 const ChartsTabs = ({ charts }) => {
   const nowMs = Date.now();
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches;
+  const mobileMargins = { top: 4, right: 8, bottom: 6, left: 4 };
 
   // strict last hour for V/F/A
   const vWin = buildWindowFromNow(charts?.voltage   || [], "t", nowMs);
@@ -192,12 +196,20 @@ const ChartsTabs = ({ charts }) => {
           xTickFormatter={fmtHmma}
           tooltipLabelFormatter={fmtHmma}
           yKey="v"
-          xLabel="Time"
-          yLabel="Voltage (V)"
+          xLabel={isMobile ? "" : "Time"}            // ← CHANGED
+          yLabel={isMobile ? "" : "Voltage (V)"}     // ← CHANGED
           color="#4f46e5"
           decimals={2}
           lineDot={true}
           lineActiveDot={{ r: 5 }}
+
+          /* NEW mobile knobs */
+          margins={isMobile ? mobileMargins : undefined}
+          tickFont={isMobile ? 9 : 12}
+          axisLabelFont={isMobile ? 10 : 12}
+          showAxisLabels={!isMobile}
+          yAxisMinWidth={28}
+          compact={isMobile}
         />
       ),
     },
@@ -208,7 +220,9 @@ const ChartsTabs = ({ charts }) => {
         <>
           <EnergyDualBar
             data={energyWeek}
-            xLabel="Day"
+            xLabel={isMobile ? "" : "Day"}                  // remove x label on phones
+            yLabel={isMobile ? "" : "Energy (kWh)"}         // remove y label on phones
+            margins={isMobile ? { top: 6, right: 6, left: 4, bottom: 6 } : { top: 12, right: 16, left: 20, bottom: 12 }}
             onSelectItem={handleSelectDay}     // open modal on click
           />
           <EnergyHourlyModal
@@ -234,16 +248,24 @@ const ChartsTabs = ({ charts }) => {
           xTickFormatter={fmtHmma}
           tooltipLabelFormatter={fmtHmma}
           yKey="f"
-          xLabel="Time"
-          yLabel="Frequency (Hz)"
+          xLabel={isMobile ? "" : "Time"}                 // CHANGED
+          yLabel={isMobile ? "" : "Frequency (Hz)"}       // CHANGED
           color="#0ea5e9"
           decimals={1}
           yPadPct={0.06}
-          yTicks={makeFreqTicksFromData(fWin.data)}
+          // yTicks={makeFreqTicksFromData(fWin.data)}
           yTickFormatter={(v) => v.toFixed(1)}
           tooltipFormatter={(v) => [Number(v).toFixed(1), "f"]}
           lineDot={true}
           lineActiveDot={{ r: 5 }}
+
+          /* NEW mobile knobs */
+          margins={isMobile ? mobileMargins : undefined}
+          tickFont={isMobile ? 10 : 12}
+          axisLabelFont={isMobile ? 10 : 12}
+          showAxisLabels={!isMobile}
+          yAxisMinWidth={28}
+          compact={isMobile}
         />
       ),
     },
@@ -261,12 +283,20 @@ const ChartsTabs = ({ charts }) => {
           xTickFormatter={fmtHmma}
           tooltipLabelFormatter={fmtHmma}
           yKey="a"
-          xLabel="Time"
-          yLabel="Current (A)"
+          xLabel={isMobile ? "" : "Time"}             // ← CHANGED
+          yLabel={isMobile ? "" : "Current (A)"}      // ← CHANGED
           color="#f59e0b"
           decimals={1}
           lineDot={true}
           lineActiveDot={{ r: 5 }}
+
+          /* NEW mobile knobs */
+          margins={isMobile ? mobileMargins : undefined}
+          tickFont={isMobile ? 10 : 12}
+          axisLabelFont={isMobile ? 10 : 12}
+          showAxisLabels={!isMobile}
+          yAxisMinWidth={28}
+          compact={isMobile}
         />
       ),
     },
@@ -301,237 +331,3 @@ const ChartsTabs = ({ charts }) => {
 };
 
 export default ChartsTabs;
-
-
-// import React, { useState } from "react";
-// import ChartBase from "./ChartBase";
-// import EnergyDualBar from "./EnergyDualBar";
-// import "./ChartsTabs.css";
-
-// /* ------- frequency ticks helper (unchanged) ------- */
-// const makeFreqTicksFromData = (data, key = "f", step = 0.2, padPct = 0.06) => {
-//   if (!data || !data.length) return undefined;
-//   let min = Infinity, max = -Infinity;
-//   for (const d of data) {
-//     const v = Number(d?.[key]);
-//     if (Number.isFinite(v)) { if (v < min) min = v; if (v > max) max = v; }
-//   }
-//   if (!Number.isFinite(min) || !Number.isFinite(max)) return undefined;
-//   const range = Math.max(1e-6, max - min);
-//   const pad = range * padPct;
-//   min -= pad; max += pad;
-//   const out = [];
-//   const start = Math.ceil(min / step) * step;
-//   for (let v = start; v <= max + 1e-9; v += step) out.push(+v.toFixed(1));
-//   return out;
-// };
-
-// /* ---------- Energy helpers (unchanged) ---------- */
-// const DAY = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-// const normalizeEnergyRow = (row = {}) => {
-//   const key = (row.t || row.day || row.d || "").toString().slice(0,3);
-//   const importKwh = Number(row.importKwh ?? row.kwh ?? 0);
-//   const exportKwh = Number(row.exportKwh ?? 0);
-//   return { key, importKwh, exportKwh };
-// };
-// const buildLastWeekSeries = (raw = []) => {
-//   const m = new Map();
-//   raw.forEach(r => {
-//     const n = normalizeEnergyRow(r);
-//     if (n.key) m.set(n.key, { importKwh: n.importKwh, exportKwh: n.exportKwh });
-//   });
-//   const today = new Date();
-//   const out = [];
-//   for (let i = 6; i >= 0; i--) {
-//     const d = new Date(today);
-//     d.setDate(today.getDate() - i);
-//     const key = DAY[d.getDay()];
-//     const label = i === 0 ? "Today" : key;
-//     const row = m.get(key) || { importKwh: 0, exportKwh: 0 };
-//     out.push({ t: label, importKwh: row.importKwh, exportKwh: row.exportKwh });
-//   }
-//   return out;
-// };
-
-// /* ---------------- strict last-hour from NOW ---------------- */
-// const HOUR_MS  = 60 * 60 * 1000;
-// const TICK_MIN = 4; // change to 3 for 3-minute ticks
-
-// const pad2 = (n) => (n < 10 ? "0" + n : "" + n);
-// const fmtHmma = (ms) => {
-//   const d = new Date(ms);
-//   let h = d.getHours(), m = d.getMinutes();
-//   const ap = h >= 12 ? "pm" : "am";
-//   h = h % 12; if (h === 0) h = 12;
-//   return `${h}:${pad2(m)} ${ap}`;
-// };
-
-// /* parse ISO or "HH:mm". If "HH:mm" is ahead of current clock, treat as yesterday. */
-// const parseTimeMs = (t, now = new Date()) => {
-//   if (t == null) return NaN;
-//   if (t instanceof Date) return t.getTime();
-//   if (typeof t === "number") return Number.isFinite(t) ? t : NaN;
-
-//   const s = String(t).trim();
-//   const iso = Date.parse(s);
-//   if (!Number.isNaN(iso)) return iso;
-
-//   const m = s.match(/^(\d{1,2}):(\d{2})$/);
-//   if (m) {
-//     const hh = Number(m[1]), mm = Number(m[2]);
-//     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0, 0);
-//     const nowMin = now.getHours() * 60 + now.getMinutes();
-//     const tMin   = hh * 60 + mm;
-//     if (tMin > nowMin) d.setDate(d.getDate() - 1); // midnight rollover
-//     return d.getTime();
-//   }
-//   return NaN;
-// };
-
-// /* ticks inside [start,end] every X minutes */
-// const makeTimeTicks = (startMs, endMs, everyMin = TICK_MIN) => {
-//   const step = everyMin * 60 * 1000;
-//   const first = Math.ceil(startMs / step) * step;
-//   const ticks = [];
-//   for (let t = first; t <= endMs; t += step) ticks.push(t);
-//   return ticks;
-// };
-
-// /** Build window = [now-1h, now]; filter data into it; always use this domain
-//  *   so the x-axis shows the previous hour correctly. */
-// const buildWindowFromNow = (rows = [], tKey = "t", nowMs = Date.now()) => {
-//   const start = nowMs - HOUR_MS;
-//   const parsed = rows
-//     .map(d => ({ ...d, ts: parseTimeMs(d?.[tKey], new Date(nowMs)) }))
-//     .filter(d => Number.isFinite(d.ts))
-//     .sort((a, b) => a.ts - b.ts);
-
-//   const within = parsed.filter(d => d.ts >= start && d.ts <= nowMs);
-//   return {
-//     data: within,                               // may be empty if no points in last hour
-//     domain: [start, nowMs],
-//     ticks: makeTimeTicks(start, nowMs),
-//   };
-// };
-
-// const ChartsTabs = ({ charts }) => {
-//   const nowMs = Date.now();
-
-//   // strict last hour for V/F/A
-//   const vWin = buildWindowFromNow(charts?.voltage   || [], "t", nowMs);
-//   const fWin = buildWindowFromNow(charts?.frequency || [], "t", nowMs);
-//   const aWin = buildWindowFromNow(charts?.amperage  || [], "t", nowMs);
-
-//   // Energy dual bars
-//   const energyWeek = buildLastWeekSeries(charts?.energy || []);
-
-//   const tabs = [
-//     {
-//       key: "voltage",
-//       label: "Voltage",
-//       render: () => (
-//         <ChartBase
-//           chart="line"
-//           data={vWin.data}
-//           xKey="ts"
-//           xType="number"
-//           xDomain={vWin.domain}
-//           xTicks={vWin.ticks}
-//           xTickFormatter={fmtHmma}
-//           tooltipLabelFormatter={fmtHmma}
-//           yKey="v"
-//           xLabel="Time"
-//           yLabel="Voltage (V)"
-//           color="#4f46e5"
-//           decimals={2}
-//           lineDot={true}                 // <-- dots enabled for hover on each point
-//           lineActiveDot={{ r: 5 }}
-//         />
-//       ),
-//     },
-//     {
-//       key: "energy",
-//       label: "Energy Consumption",
-//       render: () => <EnergyDualBar data={energyWeek} />,
-//     },
-//     {
-//       key: "frequency",
-//       label: "Frequency",
-//       render: () => (
-//         <ChartBase
-//           chart="line"
-//           data={fWin.data}
-//           xKey="ts"
-//           xType="number"
-//           xDomain={fWin.domain}
-//           xTicks={fWin.ticks}
-//           xTickFormatter={fmtHmma}
-//           tooltipLabelFormatter={fmtHmma}
-//           yKey="f"
-//           xLabel="Time"
-//           yLabel="Frequency (Hz)"
-//           color="#0ea5e9"
-//           decimals={1}
-//           yPadPct={0.06}
-//           yTicks={makeFreqTicksFromData(fWin.data)}
-//           yTickFormatter={(v) => v.toFixed(1)}
-//           tooltipFormatter={(v) => [Number(v).toFixed(1), "f"]}
-//           lineDot={true}
-//           lineActiveDot={{ r: 5 }}
-//         />
-//       ),
-//     },
-//     {
-//       key: "amperage",
-//       label: "Amperage",
-//       render: () => (
-//         <ChartBase
-//           chart="line"
-//           data={aWin.data}
-//           xKey="ts"
-//           xType="number"
-//           xDomain={aWin.domain}
-//           xTicks={aWin.ticks}
-//           xTickFormatter={fmtHmma}
-//           tooltipLabelFormatter={fmtHmma}
-//           yKey="a"
-//           xLabel="Time"
-//           yLabel="Current (A)"
-//           color="#f59e0b"
-//           decimals={1}
-//           lineDot={true}
-//           lineActiveDot={{ r: 5 }}
-//         />
-//       ),
-//     },
-//   ];
-
-//   const [active, setActive] = useState(tabs[0].key);
-
-//   return (
-//     <div className="ct-card">
-//       <div className="ct-header">
-//         <h3>Charts</h3>
-//         <div className="ct-tabs">
-//           {tabs.map((t) => (
-//             <button
-//               key={t.key}
-//               className={`ct-tab ${active === t.key ? "active" : ""}`}
-//               onClick={() => setActive(t.key)}
-//             >
-//               {t.label}
-//             </button>
-//           ))}
-//         </div>
-//       </div>
-
-//       <div className="ct-body">
-//         <div className="ct-chart-area">
-//           {tabs.find((t) => t.key === active)?.render()}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ChartsTabs;

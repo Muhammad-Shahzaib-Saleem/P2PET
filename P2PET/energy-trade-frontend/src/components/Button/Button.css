@@ -8,10 +8,25 @@
   transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease;
   box-shadow: var(--shadow-sm);
 }
+
 .btn:hover { transform: translateY(-1px); }
 .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 
-.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary {
+  --brand: #3a57ff;
+  background: var(--brand);
+  color: #fff;
+}
+
+/* add near other variants (btn-primary, btn-secondary, ...) */
+.btn-danger {
+  background-color: #dc2626;
+  color: #fff;
+}
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
 .btn-primary:hover { box-shadow: var(--shadow-md); }
 
 .btn-secondary { background: #e7eef7; color: #123; }

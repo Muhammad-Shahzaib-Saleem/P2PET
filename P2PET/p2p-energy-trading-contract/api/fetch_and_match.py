@@ -39,11 +39,13 @@ def run_matching_and_get_hash(contract):
         print("No valid participants submitted data.")
         return None
 
-    print(f"Running double auction on {len(offers)} participants...")
+    participant_count = len(offers)
+    print(f"Running double auction on {participant_count} participants...")
     matches = greedy_double_auction(offers)
 
-    # Save results to file
-    result_file = "../result/match_result.json"
+    # Always save to the same folder as this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    result_file = os.path.join(script_dir, "match_result.json")
     os.makedirs(os.path.dirname(result_file), exist_ok=True)
     with open(result_file, "w") as f:
         json.dump(matches, f, indent=2)
@@ -56,4 +58,4 @@ def run_matching_and_get_hash(contract):
         result_hash_hex = keccak(content_bytes).hex()
 
     print(f"Keccak256 hash of result: 0x{result_hash_hex}")
-    return result_hash_hex
+    return participant_count, result_hash_hex

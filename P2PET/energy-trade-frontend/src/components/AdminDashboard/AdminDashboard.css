@@ -1,0 +1,199 @@
+.dashboard-container {
+  padding: 3px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.meter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.meter-card {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  padding: 15px;
+  transition: transform 0.2s ease;
+}
+
+.meter-card:hover {
+  transform: translateY(-4px);
+}
+
+.meter-details h3 {
+  margin: 0 0 10px;
+  color: var(--brand);
+}
+
+.meter-details p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.meter-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: none;
+  gap: 8px;
+}
+
+.meter-card:hover .meter-actions {
+  display: flex;
+}
+
+.edit-btn,
+.remove-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #fff;
+}
+
+.meter-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+  font-size: 0.95rem;
+}
+
+.meter-label {
+  font-weight: bold;
+  color: #222;
+  margin-right: 10px;
+  min-width: 110px; /* keeps labels aligned */
+}
+
+.meter-row span:last-child {
+  color: #555;
+  text-align: right;
+}
+
+/* status pill styling (higher specificity and visually clear) */
+.meter-row .status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 70px;
+  text-align: center;
+  color: #fff;
+}
+
+/* Backgrounds for states */
+.meter-row .status.active {
+  background: #16a34a;
+  text-align: center;
+  color: white;
+}
+
+.meter-row .status.inactive {
+  background: #6b7280;
+  color: white;
+  text-align: center;
+}
+
+/* If you still have a generic rule like .meter-row span:last-child that sets color,
+   it won't override the background-based pill. But to be safe, you can neutralize it: */
+.meter-row span:last-child {
+  color: inherit; /* let the .status pill determine color */
+}
+
+/* ------------ Breakpoints (non-overlapping) -------------- */
+/* 1) Mobile phones: up to 467px */
+@media (max-width: 467px) {
+  .dashboard-title {
+    font-size: 0.9rem;
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  /* hide view toggle and add button while search is active (mobile) */
+  .search-active .hide-on-search {
+    display: none !important;
+  }
+
+  /* Make the Add button look like btn-sm visually on mobile */
+  .dashboard-header .btn-md {
+    font-size: 0.85rem;
+    padding: 6px 9px;
+  }
+
+  .dashboard-header .hide-on-search {
+    font-size: 0.75rem;
+  }
+}
+
+/* 2) Small tablets / phablets: 468px to 668px */
+@media (min-width: 468px) and (max-width: 668px) {
+  .dashboard-title {
+    font-size: 1.2rem;
+    text-align: left;
+    margin-bottom: 12px;
+  }
+
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* hide controls while search is active on these small tablets as well */
+  .search-active .hide-on-search {
+    display: none !important;
+  }
+
+  /* slightly bigger button than phone but smaller than desktop */
+  .dashboard-header .btn-md {
+    font-size: 0.9rem;
+    padding: 7px 10px;
+  }
+}
+
+/* 3) Desktop and large tablets: 669px and up (you can add rules here if needed) */
+@media (min-width: 669px) {
+  .dashboard-title {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  /* controls visible by default on larger screens */
+  .search-active .hide-on-search {
+    display: block !important;
+  }
+}
