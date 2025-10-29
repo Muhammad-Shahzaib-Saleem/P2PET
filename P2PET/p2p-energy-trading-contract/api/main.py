@@ -180,24 +180,7 @@ def get_dynamic_private_key(node_number, base_dir="/home/pi/Desktop/P2PET_Dynami
 dynamic_private_key=get_dynamic_private_key(2, remote_host="100.120.199.1")
 print("Private Key",dynamic_private_key)
 
-# def get_dynamic_private_key(node_number, keystore_base_path="../../quorum-ibft-chain/node", account_password=ACCOUNT_PASSWORD):
-#     """Decrypts and returns the private key for a given node number."""
-#     try:
-#         keystore_path = f"{keystore_base_path}{node_number}/data/keystore"
-#         keystore_file = subprocess.check_output(
-#             f"ls {keystore_path} | head -n 1",
-#             shell=True,
-#             text=True
-#         ).strip()
-        
-#         with open(f"{keystore_path}/{keystore_file}", "r") as f:
-#             keystore = f.read()
-        
-#         private_key_bytes = Account.decrypt(keystore, account_password)
-#         return private_key_bytes.hex()
-    
-#     except Exception as e:
-#         raise RuntimeError(f"Failed to get private key for node {node_number}: {e}")
+
 
 def get_web3_rpc(hostname, pis_json_path="pis.json"):
     """Creates a Web3 connection and contract instance dynamically using pis.json."""
@@ -291,8 +274,11 @@ def send_transaction(function_call):
 
     return receipt
 
-def send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key):
-    """Sends a transaction to the blockchain."""
+
+
+def send_transaction_dynamic(w3, sender_address, function_call, dynamic_private_key):
+    """Sends a transaction to the blockchain and returns receipt + revert reason if failed."""
+    revert_reason = None
     try:
         nonce = w3.eth.get_transaction_count(sender_address)
 
@@ -318,25 +304,25 @@ def send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_k
                     'data': tx['data'],
                     'gas': tx['gas']
                 }
-                revert_msg = w3.eth.call(tx_call, block_identifier=receipt.blockNumber)
-                print("Unknown failure reason.")
+                # Try to trigger the revert reason by simulating the call
+                w3.eth.call(tx_call, block_identifier=receipt.blockNumber)
             except ContractLogicError as e:
                 message = str(e)
                 if message.startswith("execution reverted:"):
-                    clean_msg = message.split("execution reverted:")[1].strip()
-                    print(f"Revert reason: {clean_msg}")
+                    revert_reason = message.split("execution reverted:")[1].strip()
+                    print(f"Revert reason: {revert_reason}")
                 else:
-                    print(f"Revert reason: {message}")
+                    revert_reason = message
+                    print(f"Revert reason: {revert_reason}")
             except Exception as e:
-                print(f"Failed to decode revert reason: {e}")
+                revert_reason = f"Failed to decode revert reason: {e}"
+                print(revert_reason)
 
-        return receipt
+        return receipt, revert_reason
 
     except Exception as e:
         print(f"Error sending transaction: {e}")
         raise HTTPException(status_code=500, detail=f"Error sending transaction: {e}")
-
-
 
 
 
@@ -376,15 +362,30 @@ def dynamic_key(hostname: str):
 @app.post("/dynamic_register")
 def register_participant(hostname: str):
     """Registers participant dynamically based on Pi hostname."""
-    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
-    function_call = contract.functions.register()
+    try:
+        w3, contract, sender_address, dynamic_private_key = get_web3_rpc(hostname)
+        function_call = contract.functions.register()
 
-    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+        receipt, revert_reason = send_transaction_dynamic(w3, sender_address, function_call, dynamic_private_key)
 
-    if receipt.status == 1:
-        return {"status": "success", "txHash": receipt.transactionHash.hex()}
-    else:
-        raise HTTPException(status_code=400, detail="Transaction failed.")
+        if receipt.status == 1:
+            return {"status": "success", "txHash": receipt.transactionHash.hex()}
+        else:
+            reason = revert_reason or "Transaction reverted or failed."
+            raise HTTPException(status_code=400, detail={"status": "failed", "reason": reason})
+
+    except HTTPException:
+        raise  # re-raise our controlled exceptions
+    except Exception as e:
+        revert_reason = str(e)
+        if "execution reverted" in revert_reason:
+            start = revert_reason.find("execution reverted")
+            revert_reason = revert_reason[start:]
+        raise HTTPException(
+            status_code=400,
+            detail={"status": "failed", "reason": revert_reason}
+        )
+
 
 
 
@@ -417,47 +418,93 @@ def scale(value):
     return int(value * SCALING_FACTOR)
 
 @app.post("/dynamic_submit_data")
-def submit_data(hostname:str,role:str, energy:int, price:int):
-
+def submit_data(hostname: str, role: str, energy: int, price: int):
+    """Submits participant data dynamically and returns success or revert reason."""
     role_normalized = role.strip().lower()
     if role_normalized not in ROLE_MAP:
         raise HTTPException(status_code=400, detail="Invalid role")
+
     role_int = ROLE_MAP[role_normalized]
     energy_scaled = scale(energy)
     price_scaled = scale(price)
-    
-    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
-    function_call = contract.functions.submitData(role_int, energy_scaled, price_scaled)
-    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
-    if receipt.status == 1:
-        return {"status": "success", "message": "Transaction successful."}
-    else:
-        raise HTTPException(status_code=400, detail="Transaction failed.")
 
-
-@app.post("/Dynamic_hash_participants")
-def hash_participants(hostname:str):
     try:
-        w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
-        
-        # Call the smart contract function
-        function_call = contract.functions.hashParticipantsList()
-        receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
-        
+        w3, contract, sender_address, dynamic_private_key = get_web3_rpc(hostname)
+        function_call = contract.functions.submitData(role_int, energy_scaled, price_scaled)
 
-        # You can decode the hash from the transaction logs or call the contract again to get the updated value
-        latest_hash = contract.functions.previousHash().call()
+        receipt, revert_reason = send_transaction_dynamic(
+            w3, sender_address, function_call, dynamic_private_key
+        )
 
         if receipt.status == 1:
             return {
                 "status": "success",
-                "message": "Hash calculated successfully.",
-                "computedHash": latest_hash.hex()
+                "message": "Transaction successful.",
+                "txHash": receipt.transactionHash.hex(),
             }
         else:
-            raise HTTPException(status_code=400, detail="Transaction failed.")
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "status": "failed",
+                    "reason": revert_reason or "Transaction reverted or failed.",
+                    "txHash": receipt.transactionHash.hex() if receipt else None,
+                },
+            )
+
+    except HTTPException:
+        # Pass through known errors
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "message": f"Unexpected error occurred: {str(e)}",
+            },
+        )
+    raise HTTPException(status_code=400, detail="Transaction failed.")
+
+
+
+
+
+@app.post("/Dynamic_hash_participants")
+def hash_participants(hostname: str):
+    try:
+        # 🔹 Step 1: Get web3, contract, sender, and private key
+        w3, contract, sender_address, dynamic_private_key = get_web3_rpc(hostname)
+
+        # 🔹 Step 2: Prepare function call
+        function_call = contract.functions.hashParticipantsList()
+
+        # 🔹 Step 3: Send transaction using dynamic signing function
+        receipt, revert_reason = send_transaction_dynamic(
+            w3, sender_address, function_call, dynamic_private_key
+        )
+
+        # 🔹 Step 4: Fetch the latest computed hash from contract state
+        latest_hash = contract.functions.previousHash().call()
+
+        # 🔹 Step 5: Handle transaction result
+        if receipt.status == 1:
+            tx_hash = receipt.transactionHash.hex()
+            return {
+                "status": "success",
+                "message": "✅ Hash calculated and submitted successfully.",
+                "computedHash": latest_hash.hex(),
+                "txHash": tx_hash
+            }
+        else:
+            reason = revert_reason or "Transaction failed without revert reason."
+            raise HTTPException(status_code=400, detail={"reason": reason})
+
+    except HTTPException:
+        # rethrow HTTP exceptions cleanly
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
 
 
 
@@ -467,49 +514,93 @@ PHASE_NAMES = {
     2: "Trading"
 }
 
+
+
 @app.post("/dynamic_advance_phase")
-def advance_phase(hostname:str):
-    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
-    function_call = contract.functions.advancePhase()
-    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
-    # receipt = send_transaction(contract.functions.advancePhase())
-    if receipt.status == 1:
-        # return {"status": "success", "message": "Transaction successful."}
+def advance_phase(hostname: str):
+    try:
+        w3, contract, sender_address, dynamic_private_key = get_web3_rpc(hostname)
+        function_call = contract.functions.advancePhase()
+
+        # Send transaction using dynamic private key
+        receipt, revert_reason = send_transaction_dynamic(
+            w3, sender_address, function_call, dynamic_private_key
+        )
+
+         # Replace if using another network
+
+        # Fetch current phase and round
         current_phase = contract.functions.currentPhase().call()
         current_round = contract.functions.currentRound().call()
         phase_name = PHASE_NAMES.get(current_phase, f"Unknown({current_phase})")
 
-        return {
-            "status": "success",
-            "message": "Phase advanced successfully.",
-            "currentRound": current_round,
-            "phaseName": phase_name
-        }
-    else:
-        raise HTTPException(status_code=400, detail="Transaction failed.")
+        if receipt.status == 1:
+            return {
+                "status": "success",
+                "message": "Phase advanced successfully.",
+                "currentRound": current_round,
+                "phaseName": phase_name,
+                "txHash": receipt.transactionHash.hex(),
+                "revert_reason": revert_reason
+            }
+        else:
+            return {
+                "status": "failed",
+                "message": "Transaction failed.",
+                "currentRound": current_round,
+                "phaseName": phase_name,
+                "txHash": receipt.transactionHash.hex(),
+                "revert_reason": revert_reason or "Transaction failed without revert reason"
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
 @app.post("/dynamic_submit_execution_result")
 def dynamic_submit_execution_result(hostname: str):
-    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
-    participant_count, result_hash_hex = run_matching_and_get_hash(contract)
+    try:
+        w3, contract, sender_address, dynamic_private_key = get_web3_rpc(hostname)
+        participant_count, result_hash_hex = run_matching_and_get_hash(contract)
 
-    # Build bytes32-compatible hash
-    hash_bytes32 = Web3.to_bytes(hexstr="0x" + result_hash_hex)
+        # Build bytes32-compatible hash
+        hash_bytes32 = Web3.to_bytes(hexstr="0x" + result_hash_hex)
 
-    function_call = contract.functions.submitExecutionResult(hash_bytes32)
-    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
+        function_call = contract.functions.submitExecutionResult(hash_bytes32)
 
-    if receipt.status == 1:
-        return {
-            "status": "success",
-            "participants": participant_count,
-            "result_hash": f"0x{result_hash_hex}",
-            "txHash": receipt.transactionHash.hex()
-        }
-    else:
-        raise HTTPException(status_code=400, detail="Transaction failed")
+        # Send transaction using the dynamic private key method
+        receipt, revert_reason = send_transaction_dynamic(
+            w3, sender_address, function_call, dynamic_private_key
+        )
+
+        explorer_url = f"https://etherscan.io/tx/{receipt.transactionHash.hex()}"  # Replace with proper chain explorer if needed
+
+        if receipt.status == 1:
+            return {
+                "status": "success",
+                "participants": participant_count,
+                "result_hash": f"0x{result_hash_hex}",
+                "txHash": receipt.transactionHash.hex(),
+                "explorerUrl": explorer_url,
+                "revert_reason": revert_reason
+            }
+        else:
+            return {
+                "status": "failed",
+                "participants": participant_count,
+                "result_hash": f"0x{result_hash_hex}",
+                "txHash": receipt.transactionHash.hex(),
+                "explorerUrl": explorer_url,
+                "revert_reason": revert_reason or "Transaction failed without revert reason"
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 
 
 
@@ -527,17 +618,44 @@ def verify_execution():
 
 
 
+
+
 @app.post("/dynamic_verify_execution")
 def dynamic_verify_execution(hostname: str):
-    
-    w3, contract, sender_address,dynamic_private_key = get_web3_rpc(hostname)
-    
-    function_call = contract.functions.verifyExecutionResult()
-    receipt = send_transaction_dynamic(w3, sender_address, function_call,dynamic_private_key)
-    if receipt.status == 1:
-        return {"status": "success", "message": "Transaction successful."}
-    else:
-        raise HTTPException(status_code=400, detail="Transaction failed.")
+    try:
+        w3, contract, sender_address, dynamic_private_key = get_web3_rpc(hostname)
+        # Get return values using a call (doesn't change state)
+        majority_hash, is_verified = contract.functions.verifyExecutionResult().call({'from': sender_address})
+        function_call = contract.functions.verifyExecutionResult()
+
+        # Send transaction dynamically
+        receipt, revert_reason = send_transaction_dynamic(
+            w3, sender_address, function_call, dynamic_private_key
+        )
+
+ 
+        if receipt.status == 1:
+            return {
+                "status": "success",
+                "message": "Execution verified successfully.",
+                "txHash": receipt.transactionHash.hex(),
+                "majority_hash": majority_hash.hex(),  # convert bytes32 to hex
+                "is_verified": is_verified,
+                "revert_reason": revert_reason
+            }
+        else:
+            return {
+                "status": "failed",
+                "message": "Transaction failed.",
+                "txHash": receipt.transactionHash.hex(),
+                
+                "revert_reason": revert_reason or "Transaction failed without revert reason"
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 
 @app.get("/total_participants")

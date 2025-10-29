@@ -1,38 +1,38 @@
-/* Center the form on the page (below the navbar) */
+/* ============= Page Layout ============= */
 .trade-page-center {
-  height: 100%;
-  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: transparent;
-  overflow: hidden;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: #f5f7fa;
+  box-sizing: border-box;
 }
 
-.card.trade-card .form-actions {
-  margin-top: 0;   /* was 2px */
-}
-
-.card.trade-card .form-grid {
-  row-gap: 6px;      /* was gap: 8px */
-  column-gap: 8px;   /* keep horizontal spacing the same */
-}
-
-/* Card base (you already had something similar) */
-.card.trade-card {
+/* ============= Card ============= */
+.trade-card {
   width: 100%;
   max-width: 560px;
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
-  padding: 24px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.card-head {
+  text-align: center;
 }
 
 .card-head h2 {
-  font-size: 22px;
-  font-weight: 800;
   margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
   color: #111827;
 }
 
@@ -40,57 +40,45 @@
   display: block;
   margin-top: 1px;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 0.9rem;
+}
+
+/* ============= Form ============= */
+.form-grid {
+  display: grid;
+  gap: 14px;
 }
 
 .form-row {
-  margin-bottom: 1px;
-}
-
-.form-grid {
-  display: grid;
-  gap: 8px;
-  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-row label {
-  display: block;
   font-weight: 600;
-  margin-bottom: 1px;
   color: #1f2937;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
 }
 
-/* .form-row select,
-.form-row input[type="number"] {
+.form-row input,
+.form-row select {
   width: 100%;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
-  outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
   font-size: 15px;
-} */
-
-.form-row select,
-.form-row input[type="number"],
-.form-row input[type="text"] {
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px 12px;
-  outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
-  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-
-.form-row select:focus,
-.form-row input[type="number"]:focus {
+.form-row input:focus,
+.form-row select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  outline: none;
 }
 
-/* Number field with steppers */
+/* ============= Number Field ============= */
 .number-field {
   display: grid;
   grid-template-columns: 40px 1fr 40px;
@@ -98,13 +86,6 @@
   align-items: center;
 }
 
-.card.trade-card .number-field { gap: 4px; }
-
-.number-input {
-  text-align: center;
-}
-
-/* Small +/- buttons */
 .stepper-btn {
   height: 40px;
   width: 40px;
@@ -112,7 +93,6 @@
   border-radius: 10px;
   background: #f3f4f6;
   font-weight: 700;
-  line-height: 1;
   cursor: pointer;
   transition: background 120ms ease, transform 80ms ease;
 }
@@ -125,44 +105,98 @@
   transform: translateY(1px);
 }
 
+.number-input {
+  text-align: center;
+}
+
+/* ============= Actions ============= */
 .form-actions {
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
-.form-msg {
-  margin-top: 14px;
-  font-size: 14px;
-  color: #0f766e;
+/* ============= Response Messages ============= */
+.response-message {
+  text-align: center;
+  font-size: 0.95rem;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+  word-break: break-word;
+  white-space: normal;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.hostname-input {
-  width: 100%;
-  flex: 1;
+.response-message.success {
+  background-color: #e6f9ed;
+  color: #1a7a3e;
+  border: 1px solid #b7ebc6;
 }
 
-@media (max-height: 700px) {
-  .trade-page-center {
-    align-items: flex-start;  /* stop vertical centering */
-    padding: 12px;
-    max-height: none;
-    overflow: visible;
-  }
-  .card.trade-card {
-    width: min(96vw, 560px);
+.response-message.error {
+  background-color: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #f5c2c0;
+}
+
+/* ============= Explorer Link & Hash ============= */
+.tx-info {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  text-align: center;
+  word-break: break-all;
+}
+
+.tx-info span {
+  display: block;
+  color: #333;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.tx-hash {
+  font-family: monospace;
+  color: #2563eb;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.explorer-link {
+  display: inline-block;
+  margin-top: 6px;
+  color: #0077cc;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.explorer-link:hover {
+  color: #004a99;
+  text-decoration: underline;
+}
+
+/* ============= Responsive ============= */
+@media (max-width: 480px) {
+  .trade-card {
     padding: 16px;
   }
-}
-
-@media (max-width: 420px) {
-  .card.trade-card { padding: 14px; }
-
-  .card-head h2 { font-size: 1.15rem; }
-  .card-head .help { font-size: 0.9rem; }
-
-  .form-row label { font-size: 0.95rem; }
-  .form-row select,
-  .form-row input[type="number"] { font-size: 0.95rem; }
-
-  .number-field { grid-template-columns: 36px 1fr 36px; gap: 6px; }
-  .stepper-btn { width: 36px; height: 36px; }
+  .card-head h2 {
+    font-size: 1.2rem;
+  }
+  .stepper-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .number-field {
+    grid-template-columns: 36px 1fr 36px;
+    gap: 6px;
+  }
+  .tx-info {
+    font-size: 0.85rem;
+    padding: 8px;
+  }
 }

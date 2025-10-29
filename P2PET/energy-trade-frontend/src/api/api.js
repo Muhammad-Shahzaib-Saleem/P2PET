@@ -13,13 +13,15 @@ const api = axios.create({
 });
 
 // ---- Transactions / Actions ----
-export const registerParticipant = async ({ hostname }) => {
-  const params = {
-    hostname,
-  };
 
-  const { data } = await api.post("/dynamic_register", null, { params });
-  return data;
+export const registerParticipant = async (hostname) => {
+  try {
+    const res = await api.post(`/dynamic_register?hostname=${hostname}`);
+    return res.data;
+  } catch (err) {
+    // Bubble up readable error
+    throw err.response?.data?.detail || { reason: err.message };
+  }
 };
 
 export const submitTrade = async ({ hostname, role, energy, price }) => {
@@ -35,19 +37,20 @@ export const submitTrade = async ({ hostname, role, energy, price }) => {
 };
 
 export const advancePhase = async ({ hostname }) => {
-  const params = {
-    hostname,
-  };
-
-  const { data } = await api.post("/dynamic_advance_phase", null, { params });
-  return data;
+  try {
+    const res = await api.post(`/dynamic_advance_phase?hostname=${hostname}`);
+    return res.data;
+  } catch (err) {
+    // Bubble up readable error
+    throw err.response?.data?.detail || { reason: err.message };
+  }
 };
 
 export const hashParticipants = async ({ hostname }) => {
   const params = {
     hostname,
   };
-  const { data } = await api.post("/dynamic_hash_participants", null, {
+  const { data } = await api.post("/Dynamic_hash_participants", null, {
     params,
   });
   return data;

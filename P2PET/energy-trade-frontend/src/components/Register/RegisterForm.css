@@ -7,6 +7,121 @@
   background-color: #f3f4f6;
 }
 
+.response-message {
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+.response-message.success {
+  color: green;
+}
+
+.response-message.error {
+  color: red;
+}
+
+/* Center the form nicely */
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  background-color: #f5f7fa;
+  padding: 1rem;
+}
+
+/* Card-style form */
+.register-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+}
+
+.form-title {
+  font-size: 1.5rem;
+  color: #222;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1.2rem;
+}
+
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Submit button */
+.submit-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.submit-btn:disabled {
+  background-color: #a0c3ff;
+  cursor: not-allowed;
+}
+
+/* Response message card */
+.response-card {
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  text-align: left;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  border-left: 4px solid;
+}
+
+.success-card {
+  background-color: #e8fbe8;
+  color: #1d7a1d;
+  border-color: #1d7a1d;
+}
+
+.error-card {
+  background-color: #fdeaea;
+  color: #a11919;
+  border-color: #a11919;
+}
+
+
 /* Main form box */
 .register-form {
   background-color: #fff;

@@ -1,32 +1,112 @@
+/* Center card */
 .execution-page-center {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 70vh;
+  background: #f0f2f5;
+  padding: 24px;
   overflow: hidden;
 }
 
+/* Card */
 .card-execution-card {
   width: 100%;
   max-width: 600px;
-  padding: 0rem 1.5rem 1.5rem 1.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-radius: 12px;
   background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.08);
+  padding: 24px;
+  height: auto;
 }
 
-.execution-textarea {
+/* Form grid */
+.form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.form-grid h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 16px 0;
+  color: #111827;
+}
+
+/* Labels and input fields */
+.form-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #1f2937;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Textareas */
+.execution-textarea,
+.revert-box,
+.tx-box {
   width: 100%;
   min-height: 100px;
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 0.9rem;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-family: monospace;
+  font-size: 14px;
+  background: #f8f9fa;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  word-wrap: break-word;
+  max-height: 180px;
   resize: vertical;
 }
 
+/* Explorer link */
+.explorer-link {
+  display: inline-block;
+  margin-left: 10px;
+  font-weight: 600;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.explorer-link:hover {
+  text-decoration: underline;
+}
+
+/* Revert reason */
+.revert-reason {
+  margin-top: 10px;
+}
+
+.revert-box {
+  background: #fff3f3;
+  border: 1px solid #ffaaaa;
+  color: #c00;
+  padding: 8px;
+  border-radius: 6px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* Buttons */
 .form-actions {
-  margin-top: 0.75rem;
+  margin-top: 12px;
   display: flex;
 }
 
@@ -36,18 +116,15 @@
 }
 
 .form-msg {
-  margin-top: 0.75rem;
-  font-size: 0.9rem;
-  color: #444;
+  margin-top: 14px;
+  font-size: 14px;
+  color: #0f766e;
 }
 
-.form-grid h2 {
-  margin: 0 0 0.5rem 0;   /* remove top space, keep small bottom space */
-}
-
+/* Responsive adjustments */
 @media (max-height: 700px) {
   .execution-page-center {
-    align-items: flex-start;  /* stop vertical centering */
+    align-items: flex-start;
     padding: 12px;
     max-height: none;
     overflow: visible;
