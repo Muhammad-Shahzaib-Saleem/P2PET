@@ -1,26 +1,14 @@
 [
   {
-    "buyer_id": "0xEB14c85D6526af80C4c22b76f87C643Bbb09af47",
-    "seller_id": "0x33Ca1D9e9F44529ca73957777A6B4C8599A0791D",
-    "energy_matched": 200.0,
-    "price": 40.0
+    "buyer_id": "0xff2Dc2511767de3Ca48047445E696541CA069722",
+    "seller_id": "0xE7a45257F3E5C6bbD8e7b88245E981fBF27F376a",
+    "energy_matched": 40.0,
+    "price": 30.0
   },
   {
-    "buyer_id": "0x5D3b48A6939390a49f24c3BF1859658B9D502419",
-    "seller_id": "0xCb03D9a7fB6dBC6E7b041394B8A1aa18f80Ad3B2",
-    "energy_matched": 100.0,
-    "price": 35.0
-  },
-  {
-    "buyer_id": "0xB0e93729722211fa2A830E445945Bcb8eb556998",
-    "seller_id": "0xCb03D9a7fB6dBC6E7b041394B8A1aa18f80Ad3B2",
-    "energy_matched": 50.0,
-    "price": 35.0
-  },
-  {
-    "buyer_id": "0xB0e93729722211fa2A830E445945Bcb8eb556998",
-    "seller_id": "0x6844f5760aE94e13Afcb9539714CE2b0913bb819",
-    "energy_matched": 150.0,
+    "buyer_id": "0xff2Dc2511767de3Ca48047445E696541CA069722",
+    "seller_id": "0xB2b2DC830c30c446A71B8F63DF19670df6Ec1ec6",
+    "energy_matched": 60.0,
     "price": 40.0
   }
 ]

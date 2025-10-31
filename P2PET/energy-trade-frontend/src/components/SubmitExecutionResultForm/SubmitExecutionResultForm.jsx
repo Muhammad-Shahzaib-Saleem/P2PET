@@ -165,7 +165,7 @@ const SubmitExecutionResultForm = () => {
               className="execution-textarea"
               value={
                 result
-                  ? `Status: ${result.status}\nParticipants: ${result.participant_count || 0}\nHash: ${result.result_hash || ""}`
+                  ? `Status: ${result.status}\nParticipants: ${result.participants || 0}\nHash: ${result.result_hash || ""}`
                   : ""
               }
               readOnly

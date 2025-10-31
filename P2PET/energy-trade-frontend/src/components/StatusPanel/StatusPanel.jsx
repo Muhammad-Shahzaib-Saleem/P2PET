@@ -130,8 +130,8 @@ const StatusPanel = () => {
                             ? "Seller"
                             : "N/A"}
                         </td>
-                        <td>{p[2]}</td>
-                        <td>{p[3]}</td>
+                        <td>{(p[2] / 100).toFixed(0)}</td>
+                        <td>{(p[3] / 100).toFixed(0)}</td>
                       </tr>
                     ))}
                   </tbody>

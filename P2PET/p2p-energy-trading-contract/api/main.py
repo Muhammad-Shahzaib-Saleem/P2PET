@@ -569,7 +569,7 @@ def dynamic_submit_execution_result(hostname: str):
         hash_bytes32 = Web3.to_bytes(hexstr="0x" + result_hash_hex)
 
         function_call = contract.functions.submitExecutionResult(hash_bytes32)
-
+        print("Participant Count:", participant_count)
         # Send transaction using the dynamic private key method
         receipt, revert_reason = send_transaction_dynamic(
             w3, sender_address, function_call, dynamic_private_key
