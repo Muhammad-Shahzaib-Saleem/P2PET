@@ -74,12 +74,40 @@ contract EnergyTrade {
             addressToSlot[msg.sender] == 0,
             "Participant already registered"
         );
-        require(nextAvailableSlot < TOTAL_PARTICIPANTS, "No available slots");
+        require(nextAvailableSlot <= TOTAL_PARTICIPANTS, "No available slots");
         addressToSlot[msg.sender] = nextAvailableSlot;
         nextAvailableSlot += 1;
     }
 
     // Phase 1
+    // function submitData(
+    //     Role _role,
+    //     uint256 _energyAmount,
+    //     uint256 _pricePerKWh
+    // ) public onlyPhase(Phase.DataSubmission) {
+    //     require(addressToSlot[msg.sender] != 0, "Participant not registered");
+    //     uint256 slot = addressToSlot[msg.sender];
+    //     require(
+    //         participantsList[slot].energyAmount == 0,
+    //         "Data already submitted in the current round"
+    //     );
+
+    //     participantsList[slot] = ParticipantData({
+    //         id: msg.sender,
+    //         role: _role,
+    //         energyAmount: _energyAmount,
+    //         pricePerKWh: _pricePerKWh
+    //     });
+
+    //     emit DataSubmitted(
+    //         msg.sender,
+    //         slot,
+    //         _role,
+    //         _energyAmount,
+    //         _pricePerKWh
+    //     );
+    // }
+
     function submitData(
         Role _role,
         uint256 _energyAmount,
@@ -87,12 +115,16 @@ contract EnergyTrade {
     ) public onlyPhase(Phase.DataSubmission) {
         require(addressToSlot[msg.sender] != 0, "Participant not registered");
         uint256 slot = addressToSlot[msg.sender];
+        require(slot >= 1 && slot <= TOTAL_PARTICIPANTS, "Invalid slot"); // defensive
+
+        uint256 idx = slot - 1; // convert to 0-based index
+
         require(
-            participantsList[slot].energyAmount == 0,
+            participantsList[idx].energyAmount == 0,
             "Data already submitted in the current round"
         );
 
-        participantsList[slot] = ParticipantData({
+        participantsList[idx] = ParticipantData({
             id: msg.sender,
             role: _role,
             energyAmount: _energyAmount,
@@ -175,11 +207,32 @@ contract EnergyTrade {
     }
 
     // Phase 2
+    // function submitExecutionResult(
+    //     bytes32 resultHash
+    // ) public onlyPhase(Phase.Execution) {
+    //     require(
+    //         resultSubmissionCount <= 5,
+    //         "Maximum 5 results already submitted."
+    //     );
+    //     require(
+    //         !hasSubmittedResult[msg.sender],
+    //         "You have already submitted a result."
+    //     );
+
+    //     submittedResults[resultSubmissionCount] = ExecutionResult({
+    //         submitter: msg.sender,
+    //         resultHash: resultHash
+    //     });
+
+    //     hasSubmittedResult[msg.sender] = true;
+    //     resultSubmissionCount++;
+    // }
     function submitExecutionResult(
         bytes32 resultHash
     ) public onlyPhase(Phase.Execution) {
+        // ensure there is space
         require(
-            resultSubmissionCount <= 5,
+            resultSubmissionCount < submittedResults.length,
             "Maximum 5 results already submitted."
         );
         require(

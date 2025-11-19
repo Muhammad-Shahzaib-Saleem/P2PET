@@ -80,7 +80,7 @@ def get_pi_hostname(host, file_path='pis.json'):
 
 
 
-RPC_URL = f"http://{'100.110.53.19'}:{str(rpc_port_num+node_number)}"
+RPC_URL = f"http://{'100.93.80.36'}:{str(rpc_port_num+node_number)}"
 
 # RPC_URL = f"https://100.110.53.19:22004"
 # LOCAL_RPC_URL = "https://127.0.0.1:22000"
@@ -177,7 +177,7 @@ def get_dynamic_private_key(node_number, base_dir="/home/pi/Desktop/P2PET_Dynami
     except Exception as e:
         raise RuntimeError(f"Failed to get private key for node {node_number}: {e}")
 
-dynamic_private_key=get_dynamic_private_key(2, remote_host="100.120.199.1")
+dynamic_private_key=get_dynamic_private_key(1, remote_host="100.93.80.36")
 print("Private Key",dynamic_private_key)
 
 
