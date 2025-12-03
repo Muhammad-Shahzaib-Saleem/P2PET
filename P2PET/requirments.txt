@@ -1,4 +1,25 @@
+# Core Ethereum & Web3 library
+web3>=6.0.0
+
+# Ethereum account utilities
+eth-account
+
+# FastAPI for REST API backend
+fastapi
+uvicorn
+
+# Remote SSH/SCP connections for deployment/automation
+paramiko
+
+# Environment variable/configuration loader
+python-dotenv
+
+# For subprocess/pexpect automation (used in deployment utils)
 pexpect
+
+# General network/device (meter) integration / serial port access
+pyserial
+
+# For some scripts/tests/utilities (safe to have)
+pytest
 pypi-json
-eth_utils
-web3
