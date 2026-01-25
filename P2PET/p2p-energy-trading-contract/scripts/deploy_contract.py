@@ -323,7 +323,8 @@ from initial_validators import nodes_to_run, ip_dict
 update_keystore_path_in_env()
 
 # ===== Configuration =====
-RPC_URL = "http://100.110.53.19:22007"
+
+RPC_URL = "http://100.93.80.36:22000"
 CONTRACT_NAME = "energy_trade"
 ABI_PATH = "../compiled/EnergyTrade_abi.json"
 BYTECODE_PATH = "../compiled/EnergyTrade_bytecode.txt"

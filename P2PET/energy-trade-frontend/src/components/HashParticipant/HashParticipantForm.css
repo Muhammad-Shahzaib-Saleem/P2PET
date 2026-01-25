@@ -60,7 +60,7 @@ input:focus,
 textarea:focus {
   outline: none;
   border-color: #3b82f6;
-  background-color: #fff;
+  /* background-color: #fff; */
 }
 
 .hash-textarea {

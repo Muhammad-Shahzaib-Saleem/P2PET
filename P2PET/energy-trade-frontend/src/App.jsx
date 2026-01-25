@@ -4,6 +4,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/NavBar/Navbar";
 import Sidebar from "./components/Sidebar/Sidebar";
+import ChatBot from "./components/ChatBot/ChatBot";
 import SubmitData from "./pages/SubmitData";
 import HashParticipant from "./pages/HashParticipant";
 import NetworkStatus from "./pages/NetworkStatus";
@@ -61,11 +62,18 @@ function App() {
     <div className="app-container">
       <Navbar onToggleSidebar={toggleSidebar} showToggle={showToggle} />
 
-      <div className={`main-layout ${isMobile ? "is-mobile" : ""} ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <div
+        className={`main-layout ${isMobile ? "is-mobile" : ""} ${
+          sidebarOpen ? "sidebar-open" : ""
+        }`}
+      >
         {showSidebar && <Sidebar />}
 
         {isMobile && sidebarOpen && !isMinimalPage && (
-          <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="sidebar-backdrop"
+            onClick={() => setSidebarOpen(false)}
+          />
         )}
 
         <div className="content-area">
@@ -79,14 +87,23 @@ function App() {
             <Route path="/register-node" element={<RegisterNode />} />
             <Route path="/submit-data" element={<SubmitData />} />
             <Route path="/hash-participant" element={<HashParticipant />} />
-            <Route path="/submit-execution-result" element={<SubmitExecutionResultPage />} />
+            <Route
+              path="/submit-execution-result"
+              element={<SubmitExecutionResultPage />}
+            />
             <Route path="/advance-phase" element={<AdvancePhase />} />
-            <Route path="/verify-execution-result" element={<VerifyExecutionResult />} />
+            <Route
+              path="/verify-execution-result"
+              element={<VerifyExecutionResult />}
+            />
             <Route path="/network-status" element={<NetworkStatus />} />
             <Route path="/energy-dashboard" element={<EnergyDashboard />} />
           </Routes>
         </div>
       </div>
+
+      {/* AI Chatbot - Available on all pages */}
+      <ChatBot />
     </div>
   );
 }

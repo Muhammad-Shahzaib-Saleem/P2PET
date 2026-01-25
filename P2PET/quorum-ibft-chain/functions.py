@@ -161,7 +161,10 @@ def execute_remotely(commands: list, remote_username: str, remote_ip: str, passw
         if (len(commands)):
             commands = "; ".join(commands) # make them a single command semi-colon separated
             print(f"Executing: {commands}")
-            exitFlag = shellRun(f"timeout 20 sshpass -p {password} ssh {remote_username}@{remote_ip} \"{commands}\"") # execute all the commands
+            # exitFlag = shellRun(f"sshpass -p {password} -o StrictHostKeyChecking=no ssh -o ConnectTimeout=20 {remote_username}@{remote_ip} \"{commands}\"") # execute all the commands
+            # shellRun(f"ssh -i ~/.ssh/id_rsa_pi -o StrictHostKeyChecking=no -o ConnectTimeout=20 {remote_username}@{remote_ip} \"{commands}\"")
+            # shellRun(f"ssh -i ~/.ssh/id_rsa_pi -o StrictHostKeyChecking=no -o ConnectTimeout=20 {remote_username}@{remote_ip} \"nohup {commands} > /dev/null 2>&1 &\"")
+            shellRun(f"ssh -i ~/.ssh/id_rsa_pi -o StrictHostKeyChecking=no -o ConnectTimeout=20 {remote_username}@{remote_ip} 'bash -c \"{commands}\" > /dev/null 2>&1 &'")
         else:
             print("Commands list is empty; Try populting it and try again ):")
             exit(1)
@@ -169,4 +172,4 @@ def execute_remotely(commands: list, remote_username: str, remote_ip: str, passw
         print(e)
         exit(1)
 
-    return exitFlag
+    # return exitFlag

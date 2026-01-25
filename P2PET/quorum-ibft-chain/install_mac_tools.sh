@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e  # Exit on error
 
 # Define shell config file based on default macOS shell
@@ -138,5 +139,3 @@ sudo npm install express socket.io
 echo ""
 echo "✅ All tools installed successfully on macOS!"
 echo ""
-
-#!/bin/bash
