@@ -23,7 +23,7 @@ import google.generativeai as genai
 load_dotenv()
 
 # ==================== CHATBOT CONFIGURATION ====================
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCm3P9l_xvfiSHCt-lH3GFE_rZCf4hulr4")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 

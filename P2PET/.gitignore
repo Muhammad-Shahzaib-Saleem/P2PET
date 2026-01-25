@@ -17,3 +17,5 @@ p2p_venv
 .env
 .DS_Store
 P2PET/quorum-ibft-chain/quorum-explorer-master/
+P2PET/p2p-energy-trading-contract/.secrets/
+**/.secrets/
