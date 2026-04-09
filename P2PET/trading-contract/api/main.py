@@ -15,10 +15,29 @@ from fetch_and_match import run_matching_and_get_hash
 from pathlib import Path
 import paramiko
 from fastapi.middleware.cors import CORSMiddleware
+import requests
 
+import time
+import atexit
+
+from meter import read_import_energy, read_export_energy
+from relay import relay_on, relay_off
+from eth_utils import to_checksum_address
+
+app = FastAPI()
+
+MATCH_FILE = "matching_result.json"
+
+# GPIO.setmode(GPIO.BCM)
+# GPIO.setup(RELAY_PIN, GPIO.OUT, initial=GPIO.HIGH)
 
 
 load_dotenv()
+
+
+def load_matches():
+    with open(MATCH_FILE) as f:
+        return json.load(f)
 
 # app
 app = FastAPI(title="P2P Energy Trading API")
@@ -80,7 +99,7 @@ def get_pi_hostname(host, file_path='pis.json'):
 
 
 
-RPC_URL = f"http://{'100.93.80.36'}:{str(rpc_port_num+node_number)}"
+RPC_URL = f"http://{'100.76.91.82'}:{str(rpc_port_num+node_number)}"
 
 # RPC_URL = f"https://100.110.53.19:22004"
 # LOCAL_RPC_URL = "https://127.0.0.1:22000"
@@ -177,7 +196,7 @@ def get_dynamic_private_key(node_number, base_dir="/home/pi/Desktop/P2PET_Dynami
     except Exception as e:
         raise RuntimeError(f"Failed to get private key for node {node_number}: {e}")
 
-dynamic_private_key=get_dynamic_private_key(1, remote_host="100.93.80.36")
+dynamic_private_key=get_dynamic_private_key(0, remote_host="100.76.91.82")
 print("Private Key",dynamic_private_key)
 
 
@@ -785,6 +804,99 @@ def get_has_submitted_result(address: str):
         return {"address": checksum_addr, "hasSubmittedResult": has_submitted}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+# -----------------------------Controling Hardware and Relaying  -----------------------------------
+
+
+def get_eth_address_from_ip(ip: str):
+    hostname = ip
+    if not hostname:
+        raise Exception("Hostname not found")
+
+    w3, _, sender_address, _ = get_web3_rpc(hostname)
+    return sender_address
+
+
+@app.get("/pi/address-from-ip/{ip}")
+def address_from_ip(ip: str):
+    try:
+        address = get_eth_address_from_ip(ip)
+        return {
+            "ip": ip,
+            "eth_address": address
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+
+@app.post("/energy/transfer/start")
+def start_transfer(ip: str):
+    my_addr = get_eth_address_from_ip(ip).lower()
+    matches = load_matches()
+
+    my_matches = [
+        m for m in matches
+        if m["buyer_id"].lower() == my_addr
+        or m["seller_id"].lower() == my_addr
+    ]
+
+    if not my_matches:
+        raise HTTPException(404, "No matching energy found")
+
+    results = []
+
+    for m in my_matches:
+        target = m["energy_matched"]
+
+        # ---------------- BUYER ----------------
+        if m["buyer_id"].lower() == my_addr:
+            start = read_import_energy()
+            if start is None:
+                raise HTTPException(500, "Meter read failed")
+
+            relay_on()
+
+            while True:
+                now = read_import_energy()
+                if now and (now - start) >= target:
+                    relay_off()
+                    break
+                time.sleep(1)
+
+            results.append({
+                "role": "buyer",
+                "energy_received": round(now - start, 3)
+            })
+
+        # ---------------- SELLER ----------------
+        if m["seller_id"].lower() == my_addr:
+            start = read_export_energy()
+            if start is None:
+                raise HTTPException(500, "Meter read failed")
+
+            relay_on()
+
+            while True:
+                now = read_export_energy()
+                if now and (now - start) >= target:
+                    relay_off()
+                    break
+                time.sleep(1)
+
+            results.append({
+                "role": "seller",
+                "energy_sent": round(now - start, 3)
+            })
+
+    return {
+        "eth_address": my_addr,
+        "status": "completed",
+        "details": results
+    }
 
 
 
