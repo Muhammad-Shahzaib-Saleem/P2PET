@@ -19,9 +19,10 @@ import requests
 
 import time
 import atexit
+import threading
+from contextlib import asynccontextmanager
 
-from meter import read_import_energy, read_export_energy
-from relay import relay_on, relay_off
+
 from eth_utils import to_checksum_address
 
 app = FastAPI()
@@ -31,7 +32,6 @@ MATCH_FILE = "matching_result.json"
 # GPIO.setmode(GPIO.BCM)
 # GPIO.setup(RELAY_PIN, GPIO.OUT, initial=GPIO.HIGH)
 
-
 load_dotenv()
 
 
@@ -39,8 +39,76 @@ def load_matches():
     with open(MATCH_FILE) as f:
         return json.load(f)
 
+
+
+
+
+
+
+PI_NODES = [
+    {"name": "pi_1",  "host": "100.76.91.82",    "username": "pi", "password": "Lums12345", "port": 8001},
+    {"name": "pi_2",  "host": "100.93.80.36",    "username": "pi", "password": "Lums12345", "port": 8002},
+    {"name": "pi_15", "host": "100.120.124.29",  "username": "pi", "password": "Lums12345", "port": 8003},
+]
+
+
+PI_PROJECT_DIR  = "/home/pi/Desktop/P2PET_Dynamic/P2PET"
+PI_VENV_ACTIVATE = f"source {PI_PROJECT_DIR}/venv/bin/activate"
+PI_API_DIR       = f"{PI_PROJECT_DIR}/p2p-energy-trading-contract/api"
+
+def start_pi(node: dict) -> bool:
+    name, host, username, password, port = (
+        node["name"], node["host"], node["username"], node["password"], node["port"]
+    )
+    print(f"[{name}] Connecting to {host} ...")
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect(hostname=host, username=username, password=password, timeout=10)
+    except Exception as e:
+        print(f"[{name}] ❌ SSH failed: {e}")
+        return False
+
+    # Kill any old instance on that port
+    _, stdout, _ = client.exec_command(f"fuser -k {port}/tcp 2>/dev/null || true")
+    stdout.channel.recv_exit_status()
+    time.sleep(0.5)
+
+    start_cmd = (
+        f"cd {PI_API_DIR} && "
+        f"{PI_VENV_ACTIVATE} && "
+        f"nohup python meter_api.py --port {port} > meter_{port}.log 2>&1 &"
+    )
+    _, stdout, _ = client.exec_command(start_cmd)
+    stdout.channel.recv_exit_status()
+    time.sleep(3)
+
+    _, stdout, _ = client.exec_command("pgrep -fa meter_api.py")
+    running = bool(stdout.read().decode().strip())
+    client.close()
+
+    if running:
+        print(f"[{name}] ✅  http://{host}:{port}")
+    else:
+        print(f"[{name}] ❌ Process did not start")
+    return running
+
+def start_all_pis():
+    print("\n🚀 Starting meter_api.py on all Pi nodes...")
+    for node in PI_NODES:
+        start_pi(node)
+    print("✅ Pi startup sequence complete.\n")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # runs once at startup — in background so API is immediately available
+    thread = threading.Thread(target=start_all_pis, daemon=True)
+    thread.start()
+    yield
+    # (optional teardown goes here)
 # app
-app = FastAPI(title="P2P Energy Trading API")
+app = FastAPI(title="P2P Energy Trading API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -833,70 +901,70 @@ def address_from_ip(ip: str):
 
 
 
-@app.post("/energy/transfer/start")
-def start_transfer(ip: str):
-    my_addr = get_eth_address_from_ip(ip).lower()
-    matches = load_matches()
+# @app.post("/energy/transfer/start")
+# def start_transfer(ip: str):
+#     my_addr = get_eth_address_from_ip(ip).lower()
+#     matches = load_matches()
 
-    my_matches = [
-        m for m in matches
-        if m["buyer_id"].lower() == my_addr
-        or m["seller_id"].lower() == my_addr
-    ]
+#     my_matches = [
+#         m for m in matches
+#         if m["buyer_id"].lower() == my_addr
+#         or m["seller_id"].lower() == my_addr
+#     ]
 
-    if not my_matches:
-        raise HTTPException(404, "No matching energy found")
+#     if not my_matches:
+#         raise HTTPException(404, "No matching energy found")
 
-    results = []
+#     results = []
 
-    for m in my_matches:
-        target = m["energy_matched"]
+#     for m in my_matches:
+#         target = m["energy_matched"]
 
-        # ---------------- BUYER ----------------
-        if m["buyer_id"].lower() == my_addr:
-            start = read_import_energy()
-            if start is None:
-                raise HTTPException(500, "Meter read failed")
+#         # ---------------- BUYER ----------------
+#         if m["buyer_id"].lower() == my_addr:
+#             start = read_import_energy()
+#             if start is None:
+#                 raise HTTPException(500, "Meter read failed")
 
-            relay_on()
+#             relay_on()
 
-            while True:
-                now = read_import_energy()
-                if now and (now - start) >= target:
-                    relay_off()
-                    break
-                time.sleep(1)
+#             while True:
+#                 now = read_import_energy()
+#                 if now and (now - start) >= target:
+#                     relay_off()
+#                     break
+#                 time.sleep(1)
 
-            results.append({
-                "role": "buyer",
-                "energy_received": round(now - start, 3)
-            })
+#             results.append({
+#                 "role": "buyer",
+#                 "energy_received": round(now - start, 3)
+#             })
 
-        # ---------------- SELLER ----------------
-        if m["seller_id"].lower() == my_addr:
-            start = read_export_energy()
-            if start is None:
-                raise HTTPException(500, "Meter read failed")
+#         # ---------------- SELLER ----------------
+#         if m["seller_id"].lower() == my_addr:
+#             start = read_export_energy()
+#             if start is None:
+#                 raise HTTPException(500, "Meter read failed")
 
-            relay_on()
+#             relay_on()
 
-            while True:
-                now = read_export_energy()
-                if now and (now - start) >= target:
-                    relay_off()
-                    break
-                time.sleep(1)
+#             while True:
+#                 now = read_export_energy()
+#                 if now and (now - start) >= target:
+#                     relay_off()
+#                     break
+#                 time.sleep(1)
 
-            results.append({
-                "role": "seller",
-                "energy_sent": round(now - start, 3)
-            })
+#             results.append({
+#                 "role": "seller",
+#                 "energy_sent": round(now - start, 3)
+#             })
 
-    return {
-        "eth_address": my_addr,
-        "status": "completed",
-        "details": results
-    }
+#     return {
+#         "eth_address": my_addr,
+#         "status": "completed",
+#         "details": results
+#     }
 
 
 
