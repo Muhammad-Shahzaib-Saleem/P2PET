@@ -66,8 +66,15 @@ class PowerReading(BaseModel):
     power_w: float
     timestamp: float
 
+class RelaySetRequest(BaseModel):
+    state: bool  # True = ON, False = OFF
+
 class PowerFactorReading(BaseModel):
     power_factor: float
+    timestamp: float
+
+class RelayStateResponse(BaseModel):
+    relay_on: bool
     timestamp: float
 
 class EnergyReading(BaseModel):
@@ -78,7 +85,9 @@ class EnergyReading(BaseModel):
     timestamp: float
 
 class TransferStartRequest(BaseModel):
-    threshold_kwh: Optional[float] = None  # override default if provided
+    from_pi_ip: str
+    to_pi_ip: str
+    transfer_kwh: float # override default if provided
 
 class TransferStatusResponse(BaseModel):
     active:           bool
@@ -171,72 +180,78 @@ def get_energy():
 
 # ─── Transfer / relay routes ──────────────────────────────────────────────────
 
-@app.post("/transfer/start", response_model=TransferStatusResponse,
-          summary="Turn relay ON and start monitoring reverse energy")
-def start_transfer(body: TransferStartRequest = TransferStartRequest()):
-    """
-    Turns the relay ON and begins polling reverse energy (ER_old) every second.
-    When ER_old reaches **threshold_kwh** (default: 2.790 kWh hardcoded in relay.py),
-    the relay is turned OFF automatically.
 
-    You can optionally pass a custom threshold in the request body:
-    ```json
-    { "threshold_kwh": 3.5 }
-    ```
+@app.post("/relay/set", response_model=RelayStateResponse,
+          summary="Manually control relay ON/OFF")
+def set_relay(body: RelaySetRequest):
+    """
+    Remote relay control endpoint.
+    Used by FROM PI to control TO PI relay in P2P transfer system.
+    """
+
+    try:
+        if body.state:
+            relay.relay_on()
+        else:
+            relay.relay_off()
+
+        return RelayStateResponse(
+            relay_on=body.state,
+            timestamp=time.time()
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/transfer/start", summary="Start a P2P energy transfer")
+def start_transfer(body: TransferStartRequest):
+    """
+    Opens relay on TO pi and monitors until transfer_kwh is delivered,
+    then closes relay automatically.
     """
     try:
-        status = relay.start_transfer(threshold=body.threshold_kwh)
+        relay.start_transfer(
+            from_pi_ip=body.from_pi_ip,
+            to_pi_ip=body.to_pi_ip,
+            transfer_kwh=body.transfer_kwh,
+        )
+        return {"status": "transfer_started", "transfer_kwh": body.transfer_kwh}
+
     except RuntimeError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-
-    return TransferStatusResponse(
-        active             = status["active"],
-        relay_on           = status["relay_on"],
-        start_time         = status["start_time"],
-        end_time           = status["end_time"],
-        start_energy_kwh   = status["start_energy"],
-        current_energy_kwh = status["current_energy"],
-        threshold_kwh      = status["threshold"],
-        stop_reason        = status["stop_reason"],
-    )
+        raise HTTPException(status_code=409, detail=str(e))  # 409 = already active
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/transfer/stop", response_model=TransferStatusResponse,
-          summary="Manually turn relay OFF and stop the transfer session")
-def stop_transfer():
-    """Force-stops an active transfer session and turns the relay OFF immediately."""
-    status = relay.stop_transfer()
-    return TransferStatusResponse(
-        active             = status["active"],
-        relay_on           = status["relay_on"],
-        start_time         = status["start_time"],
-        end_time           = status["end_time"],
-        start_energy_kwh   = status["start_energy"],
-        current_energy_kwh = status["current_energy"],
-        threshold_kwh      = status["threshold"],
-        stop_reason        = status["stop_reason"],
-    )
+@app.post("/transfer/stop", summary="Manually stop an active transfer")
+def stop_transfer(body: TransferStartRequest):
+    relay.stop_transfer(to_pi_ip=body.to_pi_ip)
+    return {"status": "transfer_stopped"}
 
 
 @app.get("/transfer/status", response_model=TransferStatusResponse,
          summary="Get current transfer session status")
 def transfer_status():
-    """Returns live status of the relay and ongoing energy transfer session."""
-    status = relay.get_status()
+    s = relay.get_status()
     return TransferStatusResponse(
-        active             = status["active"],
-        relay_on           = status["relay_on"],
-        start_time         = status["start_time"],
-        end_time           = status["end_time"],
-        start_energy_kwh   = status["start_energy"],
-        current_energy_kwh = status["current_energy"],
-        threshold_kwh      = status["threshold"],
-        stop_reason        = status["stop_reason"],
+        active=s["active"],
+        relay_on=s["relay_on"],
+        start_time=s.get("start_time"),
+        end_time=s.get("end_time"),
+        start_energy_kwh=s.get("to_start_rev"),
+        current_energy_kwh=s.get("current_to_rev"),
+        threshold_kwh=s["threshold"],
+        stop_reason=s.get("stop_reason"),
     )
+
+
+
 
 
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("meter_api:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("meter_api:app", host="0.0.0.0", port=8002, reload=False)

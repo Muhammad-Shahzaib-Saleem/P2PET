@@ -46,7 +46,7 @@ def load_matches():
 
 
 PI_NODES = [
-    {"name": "pi_1",  "host": "100.76.91.82",    "username": "pi", "password": "Lums12345", "port": 8001},
+    # {"name": "pi_1",  "host": "100.76.91.82",    "username": "pi", "password": "Lums12345", "port": 8001},
     {"name": "pi_2",  "host": "100.93.80.36",    "username": "pi", "password": "Lums12345", "port": 8002},
     {"name": "pi_15", "host": "100.120.124.29",  "username": "pi", "password": "Lums12345", "port": 8003},
 ]
