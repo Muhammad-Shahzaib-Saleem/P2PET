@@ -4,7 +4,7 @@ import axios from "axios";
 // Auto-detect host (works when you open UI from another device on LAN)
 const host = window.location.hostname;
 // Prefer .env override: VITE_API_BASE=http://<pi-ip>:8000
-export const API_BASE = "http://192.168.0.145:8000/";
+export const API_BASE = "http://localhost:8000/";
 
 // Shared axios instance (you can add interceptors/logging here later)
 const api = axios.create({
@@ -80,6 +80,16 @@ export const verifyExecution = async ({ hostname }) => {
 // ---- Reads / Status ----
 export const getCurrentPhase = async () => {
   const { data } = await api.get("/current_phase");
+  return data;
+};
+
+export const getBiddingResults = async () => {
+  const { data } = await api.get("/bidding-results");
+  return data;
+};
+
+export const getRemainingTimeInPhase = async () => {
+  const { data } = await api.get("/remaining_time_in_phase");
   return data;
 };
 

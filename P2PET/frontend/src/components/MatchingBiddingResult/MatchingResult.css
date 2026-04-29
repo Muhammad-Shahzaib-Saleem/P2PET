@@ -1,0 +1,212 @@
+/* =========================
+   BASE LAYOUT (already used)
+========================= */
+
+.status-center {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.card.status-card {
+  width: 100%;
+  max-width: 1100px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+.status-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.refresh {
+  border: none;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 18px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.refresh:hover {
+  background: #e0e7ff;
+}
+
+/* =========================
+   ERROR
+========================= */
+
+.error-msg {
+  background: #ffe4e6;
+  color: #be123c;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   STATS GRID
+========================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #eee;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* =========================
+   SECTION HEADERS
+========================= */
+
+.participants-section,
+.submitted-section {
+  margin-top: 20px;
+}
+
+.participants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.toggle-btn {
+  background: #111827;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  background: #374151;
+}
+
+/* =========================
+   TABLE STYLING
+========================= */
+
+.participants-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.participants-table th,
+.participants-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 14px;
+}
+
+.participants-table th {
+  background: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+.participants-table tr:hover {
+  background: #f9fafb;
+}
+
+.participants-table {
+  table-layout: auto;
+  width: 100%;
+}
+
+/* truncate long hashes */
+.hash-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: monospace;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hash-cell:hover {
+  overflow: visible;
+  white-space: normal;
+  background: #fff;
+  position: relative;
+  z-index: 10;
+}
+
+/* =========================
+   OPTIONAL: BIDDING HIGHLIGHT STYLES
+   (NEW SECTION FOR YOUR PAGE)
+========================= */
+
+.bidding-card {
+  border-left: 4px solid #4f46e5;
+  padding-left: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.price-highlight {
+  font-weight: 700;
+  color: #059669;
+}
+
+.energy-highlight {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .participants-table {
+    font-size: 12px;
+  }
+
+  .hash-cell {
+    max-width: 120px;
+  }
+}

@@ -18,6 +18,7 @@ import UserLoginPage from "./pages/UserLogin";
 import UserSignupPage from "./pages/UserSignupPage";
 import RegisterNode from "./pages/RegisterNode";
 import AdvancePhase from "./pages/AdvancePhase";
+import MatchingBiddingResult from "./pages/MatchingBiddingResult";
 
 import "./App.css";
 
@@ -84,6 +85,7 @@ function App() {
             <Route path="/verify-execution-result" element={<VerifyExecutionResult />} />
             <Route path="/network-status" element={<NetworkStatus />} />
             <Route path="/energy-dashboard" element={<EnergyDashboard />} />
+            <Route path="/bidding-result" element={<MatchingBiddingResult />} />
           </Routes>
         </div>
       </div>

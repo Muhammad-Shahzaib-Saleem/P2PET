@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import {
   getCurrentPhase,
@@ -5,7 +7,8 @@ import {
   getTotalParticipants,
   getNextAvailableSlot,
   getParticipantsList,
-  getSubmittedResults, // 👈 Make sure this API exists in api.js
+  getSubmittedResults,
+  getRemainingTimeInPhase,
 } from "../../api/api";
 import "./StatusPanel.css";
 
@@ -27,11 +30,14 @@ const StatusPanel = () => {
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState("");
 
+  const [remainingTime, setRemainingTime] = useState("-");
+  const [liveTime, setLiveTime] = useState(null);
+
+  // 🔁 Fetch data
   const refresh = async () => {
     try {
       setError("");
 
-      // Fetch all data concurrently but safely
       const results = await Promise.allSettled([
         getCurrentPhase(),
         getCurrentRound(),
@@ -39,6 +45,7 @@ const StatusPanel = () => {
         getNextAvailableSlot(),
         getParticipantsList(),
         getSubmittedResults(),
+        getRemainingTimeInPhase(),
       ]);
 
       const [
@@ -48,21 +55,39 @@ const StatusPanel = () => {
         slotRes,
         participantsRes,
         submittedRes,
+        remainingTimeRes,
       ] = results;
 
-      if (phaseRes.status === "fulfilled") setPhase(phaseRes.value.currentPhase ?? "-");
-      if (roundRes.status === "fulfilled") setRound(roundRes.value.currentRound ?? "-");
-      if (totalRes.status === "fulfilled") setTotal(totalRes.value.TOTAL_PARTICIPANTS ?? "-");
-      if (slotRes.status === "fulfilled") setNextSlot(slotRes.value.nextAvailableSlot ?? "-");
+      if (phaseRes.status === "fulfilled")
+        setPhase(phaseRes.value.currentPhase ?? "-");
+
+      if (roundRes.status === "fulfilled")
+        setRound(roundRes.value.currentRound ?? "-");
+
+      if (totalRes.status === "fulfilled")
+        setTotal(totalRes.value.TOTAL_PARTICIPANTS ?? "-");
+
+      if (slotRes.status === "fulfilled")
+        setNextSlot(slotRes.value.nextAvailableSlot ?? "-");
+
+      if (remainingTimeRes.status === "fulfilled") {
+        const time =
+          remainingTimeRes.value?.remainingTimeInPhase ?? "-";
+
+        setRemainingTime(time);
+        setLiveTime(typeof time === "number" ? time : null);
+      }
 
       if (participantsRes.status === "fulfilled") {
-        const list = participantsRes.value.participantsList ?? [];
-        setParticipants(list);
+        setParticipants(
+          participantsRes.value.participantsList ?? []
+        );
       }
 
       if (submittedRes.status === "fulfilled") {
-        const list = submittedRes.value.submittedResults ?? [];
-        setSubmittedResults(list);
+        setSubmittedResults(
+          submittedRes.value.submittedResults ?? []
+        );
       }
     } catch (err) {
       console.error("Status refresh failed:", err);
@@ -70,18 +95,44 @@ const StatusPanel = () => {
     }
   };
 
+  // 🔁 API refresh every 8 sec
   useEffect(() => {
     refresh();
     const id = setInterval(refresh, 8000);
     return () => clearInterval(id);
   }, []);
 
+  // ⏱️ Live countdown every 1 sec
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLiveTime((prev) => {
+        if (prev === null || prev <= 0) return prev;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // ⏱️ Format MM:SS
+  const formatTime = (seconds) => {
+    if (seconds === null || seconds === "-" || seconds === undefined)
+      return "-";
+
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   return (
     <div className="status-center">
       <div className="card status-card">
         <div className="status-head">
           <h3>Marketplace Round Status</h3>
-          <button className="refresh" onClick={refresh} title="Refresh">
+          <button className="refresh" onClick={refresh}>
             ↻
           </button>
         </div>
@@ -93,9 +144,13 @@ const StatusPanel = () => {
           <StatusItem label="Current Round" value={round} />
           <StatusItem label="Total Participants" value={total} />
           <StatusItem label="Next Free Slot" value={nextSlot} />
+          <StatusItem
+            label="Remaining Time "
+            value={formatTime(liveTime ?? remainingTime)}
+          />
         </div>
 
-        {/* Participants List Section */}
+        {/* Participants */}
         <div className="participants-section">
           <div className="participants-header">
             <h3>Participants List</h3>
@@ -137,13 +192,13 @@ const StatusPanel = () => {
                   </tbody>
                 </table>
               ) : (
-                <p className="no-participants">No participants found.</p>
+                <p>No participants found.</p>
               )}
             </>
           )}
         </div>
 
-        {/* Submitted Results Section */}
+        {/* Submitted Results */}
         <div className="submitted-section">
           <div className="participants-header">
             <h3>Submitted Execution Results</h3>
@@ -177,7 +232,7 @@ const StatusPanel = () => {
                   </tbody>
                 </table>
               ) : (
-                <p className="no-participants">No submitted results found.</p>
+                <p>No submitted results found.</p>
               )}
             </>
           )}
@@ -188,4 +243,3 @@ const StatusPanel = () => {
 };
 
 export default StatusPanel;
-

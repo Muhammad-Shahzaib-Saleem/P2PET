@@ -23,6 +23,13 @@ const Sidebar = () => {
       ],
     },
     {
+      title: "Bidding Results",
+      key: "Results Matching Prosumer and Consumer",
+      items: [
+        { key: "Bidding Result", label: "Bidding Result", path: "/bidding-result" },
+      ],
+    },
+    {
       title: "Energy",
       key: "energy",
       items: [
