@@ -4,61 +4,25 @@
     {
       "name": "node0",
       "client": "goquorum",
-      "rpcUrl": "http://100.76.91.82:22000",
+      "rpcUrl": "http://100.93.80.36:22000",
       "privateTxUrl": ""
     },
     {
       "name": "node1",
       "client": "goquorum",
-      "rpcUrl": "http://100.93.80.36:22001",
+      "rpcUrl": "http://100.120.139.128:22001",
       "privateTxUrl": ""
     },
     {
       "name": "node2",
       "client": "goquorum",
-      "rpcUrl": "http://100.116.162.18:22002",
+      "rpcUrl": "http://100.80.11.48:22002",
       "privateTxUrl": ""
     },
     {
       "name": "node3",
       "client": "goquorum",
-      "rpcUrl": "http://100.80.205.106:22003",
-      "privateTxUrl": ""
-    },
-    {
-      "name": "node4",
-      "client": "goquorum",
-      "rpcUrl": "http://100.120.199.1:22004",
-      "privateTxUrl": ""
-    },
-    {
-      "name": "node5",
-      "client": "goquorum",
-      "rpcUrl": "http://100.120.139.128:22005",
-      "privateTxUrl": ""
-    },
-    {
-      "name": "node6",
-      "client": "goquorum",
-      "rpcUrl": "http://100.92.186.73:22006",
-      "privateTxUrl": ""
-    },
-    {
-      "name": "node7",
-      "client": "goquorum",
-      "rpcUrl": "http://100.80.11.48:22007",
-      "privateTxUrl": ""
-    },
-    {
-      "name": "node8",
-      "client": "goquorum",
-      "rpcUrl": "http://100.120.196.113:22008",
-      "privateTxUrl": ""
-    },
-    {
-      "name": "node9",
-      "client": "goquorum",
-      "rpcUrl": "http://100.110.53.19:22009",
+      "rpcUrl": "http://100.120.124.29:22003",
       "privateTxUrl": ""
     }
   ]
