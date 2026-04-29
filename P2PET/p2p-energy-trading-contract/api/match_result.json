@@ -1,8 +1,8 @@
 [
   {
-    "buyer_id": "0x302487F15bF11630869B3E97bFe326A107378E19",
-    "seller_id": "0x872FEb63fF2ee28c7d5690da8C33fd971058F678",
-    "energy_matched": 0.001,
-    "price": 12.5
+    "buyer_id": "0xBCbebe8d87c4a8405c72719373BAE37BD7389747",
+    "seller_id": "0x5f6bAca4395fee37b7e40B294300F0283cbAbD64",
+    "energy_matched": 1.0,
+    "price": 7.0
   }
 ]

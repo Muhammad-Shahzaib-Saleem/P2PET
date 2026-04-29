@@ -27,7 +27,7 @@ from typing import List, Dict, Any
 
 from eth_utils import to_checksum_address
 
-app = FastAPI()
+
 
 MATCH_FILE = "matching_result.json"
 
@@ -53,123 +53,26 @@ PI_NODES = [
     {"name": "pi_15", "host": "100.120.124.29",  "username": "pi", "password": "Lums12345", "port": 8003},
 ]
 
+ROLE_MAP = {
+    "buyer": 1,
+    "seller": 2
+}
+
+SCALING_FACTOR = 100
 
 PI_PROJECT_DIR  = "/home/pi/Desktop/P2PET_Dynamic/P2PET"
 PI_VENV_ACTIVATE = f"source {PI_PROJECT_DIR}/venv/bin/activate"
 PI_API_DIR       = f"{PI_PROJECT_DIR}/p2p-energy-trading-contract/api"
 
-def start_pi(node: dict) -> bool:
-    name, host, username, password, port = (
-        node["name"], node["host"], node["username"], node["password"], node["port"]
-    )
-    print(f"[{name}] Connecting to {host} ...")
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    try:
-        client.connect(hostname=host, username=username, password=password, timeout=10)
-    except Exception as e:
-        print(f"[{name}] ❌ SSH failed: {e}")
-        return False
-
-    # Kill any old instance on that port
-    _, stdout, _ = client.exec_command(f"fuser -k {port}/tcp 2>/dev/null || true")
-    stdout.channel.recv_exit_status()
-    time.sleep(0.5)
-
-    start_cmd = (
-        f"cd {PI_API_DIR} && "
-        f"{PI_VENV_ACTIVATE} && "
-        f"nohup python meter_api.py --port {port} > meter_{port}.log 2>&1 &"
-    )
-    _, stdout, _ = client.exec_command(start_cmd)
-    stdout.channel.recv_exit_status()
-    time.sleep(3)
-
-    _, stdout, _ = client.exec_command("pgrep -fa meter_api.py")
-    running = bool(stdout.read().decode().strip())
-    client.close()
-
-    if running:
-        print(f"[{name}] ✅  http://{host}:{port}")
-    else:
-        print(f"[{name}] ❌ Process did not start")
-    return running
-
-def start_all_pis():
-    print("\n🚀 Starting meter_api.py on all Pi nodes...")
-    for node in PI_NODES:
-        start_pi(node)
-    print("✅ Pi startup sequence complete.\n")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # runs once at startup — in background so API is immediately available
-    thread = threading.Thread(target=start_all_pis, daemon=True)
-    thread.start()
-    yield
-    # (optional teardown goes here)
-# app
-app = FastAPI(title="P2P Energy Trading API", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # or specify ["http://localhost:5173"] for stricter control
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-def get_local_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('192.168.0.1', 80))
-        return s.getsockname()[0]
-    finally:
-        s.close()
-
-ip_address = get_local_ip()
 
 with open("NodeNum.txt", "r") as f:
     node_number = int(f.read().strip())
 
 rpc_port_num = 22000
 
-import json
-
-def get_pi_hostname(host, file_path='pis.json'):
-    """
-    Given a host name, return its hostname and user from pis.json.
-    
-    Args:
-        host (str): The host key (e.g., "pi_1", "pi_4Ethernet").
-        file_path (str): Path to the pis.json file.
-    
-    Returns:
-        dict: A dictionary with 'hostname' and 'user' if found, else None.
-    """
-    try:
-        with open(file_path, 'r') as f:
-            pis = json.load(f)
-
-        for pi in pis:
-            if pi['host'] == host:
-                return {"hostname": pi['hostname']}
-        
-        print(f"Host '{host}' not found in {file_path}")
-        return None
-
-    except FileNotFoundError:
-        print(f"Error: File '{file_path}' not found.")
-        return None
-    except json.JSONDecodeError:
-        print(f"Error: '{file_path}' is not a valid JSON file.")
-        return None
-
-
-
-
-RPC_URL = f"http://{'100.76.91.82'}:{str(rpc_port_num+node_number)}"
+RPC_URL = f"http://{'100.120.139.128'}:{str(rpc_port_num+node_number)}"
 
 # RPC_URL = f"https://100.110.53.19:22004"
 # LOCAL_RPC_URL = "https://127.0.0.1:22000"
@@ -215,6 +118,177 @@ sender_address = account.address
 
 # Contract instance
 contract = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=abi)
+
+
+RESULT_FILE              = "match_result.json"   # matching algorithm output
+PIS_JSON_PATH            = "pis.json"      # must include "eth_address" per Pi
+METER_API_PORT           = 8002            # default meter_api port on each Pi
+TRANSFER_POLL_INTERVAL_S = 2              # seconds between status polls
+TRANSFER_TIMEOUT_S       = 300            # 5-minute hard timeout per transfer
+
+
+
+def start_pi(node: dict) -> bool:
+    name, host, username, password, port = (
+        node["name"], node["host"], node["username"], node["password"], node["port"]
+    )
+    print(f"[{name}] Connecting to {host} ...")
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        client.connect(hostname=host, username=username, password=password, timeout=10)
+    except Exception as e:
+        print(f"[{name}] ❌ SSH failed: {e}")
+        return False
+
+    # Kill any old instance on that port
+    _, stdout, _ = client.exec_command(f"fuser -k {port}/tcp 2>/dev/null || true")
+    stdout.channel.recv_exit_status()
+    time.sleep(0.5)
+
+    start_cmd = (
+        f"cd {PI_API_DIR} && "
+        f"{PI_VENV_ACTIVATE} && "
+        f"nohup python meter_api.py --port {port} > meter_{port}.log 2>&1 &"
+    )
+    _, stdout, _ = client.exec_command(start_cmd)
+    stdout.channel.recv_exit_status()
+    time.sleep(3)
+
+    _, stdout, _ = client.exec_command("pgrep -fa meter_api.py")
+    running = bool(stdout.read().decode().strip())
+    client.close()
+
+    if running:
+        print(f"[{name}] ✅  http://{host}:{port}")
+    else:
+        print(f"[{name}] ❌ Process did not start")
+    return running
+
+def start_all_pis():
+    print("\n🚀 Starting meter_api.py on all Pi nodes...")
+    for node in PI_NODES:
+        start_pi(node)
+    print("✅ Pi startup sequence complete.\n")
+
+
+# ─── Phase Keeper Bot ─────────────────────────────────────────────────────────
+
+def phase_keeper_loop():
+    """
+    Runs in background thread forever.
+    Every 60 seconds checks if the phase timer has expired.
+    If yes, calls advancePhase() on the contract automatically.
+    """
+    print("⏰ Phase keeper bot started...")
+    while True:
+        try:
+            time_left = contract.functions.timeRemaining().call()
+            current_phase = contract.functions.currentPhase().call()
+            current_round = contract.functions.currentRound().call()
+
+            phase_names = {0: "DataSubmission", 1: "Execution"}
+            phase_name = phase_names.get(current_phase, str(current_phase))
+
+            print(f"[Keeper] Round {current_round} | Phase: {phase_name} | Time remaining: {time_left}s")
+
+            if time_left == 0:
+                print(f"[Keeper] ⏰ Timer expired! Advancing phase...")
+                receipt = send_transaction(contract.functions.advancePhase())
+
+                if receipt.status == 1:
+                    new_phase = contract.functions.currentPhase().call()
+                    new_round = contract.functions.currentRound().call()
+                    new_phase_name = phase_names.get(new_phase, str(new_phase))
+                    print(f"[Keeper] ✅ Phase advanced! Now: Round {new_round} | Phase: {new_phase_name}")
+                else:
+                    print(f"[Keeper] ❌ advancePhase() transaction failed.")
+
+        except Exception as e:
+            print(f"[Keeper] ❌ Error: {e}")
+
+        time.sleep(60)  # check every 60 seconds
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start Pi nodes in background
+    pi_thread = threading.Thread(target=start_all_pis, daemon=True)
+    pi_thread.start()
+
+    # Start phase keeper bot in background   <-- ADD THIS
+    keeper_thread = threading.Thread(target=phase_keeper_loop, daemon=True)
+    keeper_thread.start()
+
+    yield
+    # teardown (optional)
+# app
+app = FastAPI(title="P2P Energy Trading API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or specify ["http://localhost:5173"] for stricter control
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('192.168.0.1', 80))
+        return s.getsockname()[0]
+    finally:
+        s.close()
+
+
+
+import json
+
+
+def load_bidding_results():
+    if not os.path.exists(RESULT_FILE):
+        return []
+    
+    with open(RESULT_FILE, "r") as file:
+        data = json.load(file)
+    
+    return data
+
+
+def get_pi_hostname(host, file_path='pis.json'):
+    """
+    Given a host name, return its hostname and user from pis.json.
+    
+    Args:
+        host (str): The host key (e.g., "pi_1", "pi_4Ethernet").
+        file_path (str): Path to the pis.json file.
+    
+    Returns:
+        dict: A dictionary with 'hostname' and 'user' if found, else None.
+    """
+    try:
+        with open(file_path, 'r') as f:
+            pis = json.load(f)
+
+        for pi in pis:
+            if pi['host'] == host:
+                return {"hostname": pi['hostname']}
+        
+        print(f"Host '{host}' not found in {file_path}")
+        return None
+
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+        return None
+    except json.JSONDecodeError:
+        print(f"Error: '{file_path}' is not a valid JSON file.")
+        return None
+
+
+
+
+
 
 
 
@@ -496,12 +570,7 @@ def submit_data(role:int, energy:int, price:int):
         raise HTTPException(status_code=400, detail="Transaction failed.")
 
 
-ROLE_MAP = {
-    "buyer": 1,
-    "seller": 2
-}
 
-SCALING_FACTOR = 100
 
 def scale(value):
     return int(value * SCALING_FACTOR)
@@ -788,6 +857,15 @@ def get_next_available_slot():
         return {"nextAvailableSlot": slot}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@app.get("/remaining_time_in_phase")
+def get_remaining_time_in_phase():
+    try:
+        remaining_time = contract.functions.timeRemaining().call()
+        return {"remainingTimeInPhase": remaining_time}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/current_round")
@@ -877,6 +955,68 @@ def get_has_submitted_result(address: str):
 
 
 
+@app.get("/bidding-results")
+def get_bidding_results():
+    data = load_bidding_results()
+
+    return {
+        "status": "success",
+        "total_matches": len(data),
+        "data": data
+    }
+
+
+@app.get("/keeper/status")
+def keeper_status():
+    """Check current phase, round and time remaining."""
+    try:
+        time_left     = contract.functions.timeRemaining().call()
+        current_phase = contract.functions.currentPhase().call()
+        current_round = contract.functions.currentRound().call()
+
+        phase_names = {0: "DataSubmission", 1: "Execution"}
+
+        return {
+            "status":        "running",
+            "currentRound":  current_round,
+            "currentPhase":  phase_names.get(current_phase, str(current_phase)),
+            "timeRemaining": time_left,
+            "willAdvanceIn": f"{time_left} seconds" if time_left > 0 else "advancing soon"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/keeper/force_advance")
+def keeper_force_advance():
+    """Manually force a phase advance (for testing or emergency use)."""
+    try:
+        old_phase = contract.functions.currentPhase().call()
+        old_round = contract.functions.currentRound().call()
+
+        receipt = send_transaction(contract.functions.advancePhase())
+
+        new_phase = contract.functions.currentPhase().call()
+        new_round = contract.functions.currentRound().call()
+
+        phase_names = {0: "DataSubmission", 1: "Execution"}
+
+        if receipt.status == 1:
+            return {
+                "status":   "success",
+                "before":   {"round": old_round, "phase": phase_names.get(old_phase)},
+                "after":    {"round": new_round, "phase": phase_names.get(new_phase)},
+                "txHash":   receipt.transactionHash.hex()
+            }
+        else:
+            raise HTTPException(status_code=400, detail="advancePhase transaction failed")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 # ----------------------------- Transfer Energy  Controling Hardware and Relaying  -----------------------------------
 
@@ -905,222 +1045,10 @@ def get_has_submitted_result(address: str):
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
-RESULT_FILE              = "match_result.json"   # matching algorithm output
-PIS_JSON_PATH            = "pis.json"      # must include "eth_address" per Pi
-METER_API_PORT           = 8002            # default meter_api port on each Pi
-TRANSFER_POLL_INTERVAL_S = 2              # seconds between status polls
-TRANSFER_TIMEOUT_S       = 300            # 5-minute hard timeout per transfer
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-# def load_result_json(path: str = RESULT_FILE) -> List[Dict]:
-#     """Load the matching result produced by the bidding algorithm."""
-#     with open(path, "r") as f:
-#         return json.load(f)
 
 
-# def build_address_to_pi_map(pis_json_path: str = PIS_JSON_PATH) -> Dict[str, Dict]:
-#     """
-#     Returns: { "0xaddress_lowercase": {"name": ..., "hostname": ..., "meter_port": ...} }
-#     Built from the eth_address field in every pis.json entry.
-#     """
-#     with open(pis_json_path, "r") as f:
-#         pis: Dict = json.load(f)
-
-#     mapping = {}
-#     for name, info in pis.items():
-#         addr = info.get("eth_address", "").lower()
-#         if addr:
-#             mapping[addr] = {
-#                 "name":       name,
-#                 "hostname":   info["hostname"],
-#                 "meter_port": info.get("meter_port", METER_API_PORT),
-#             }
-#     return mapping
-
-
-# def meter_url(hostname: str, port: int) -> str:
-#     return f"http://{hostname}:{port}"
-
-
-# def pi_start_transfer(seller_info: Dict, buyer_hostname: str, energy_kwh: float) -> Dict:
-#     """POST /transfer/start on the seller Pi to open its relay."""
-#     url = f"{meter_url(seller_info['hostname'], seller_info['meter_port'])}/transfer/start"
-#     payload = {
-#         "from_pi_ip":   seller_info["hostname"],
-#         "to_pi_ip":     buyer_hostname,
-#         "transfer_kwh": energy_kwh,
-#     }
-#     resp = requests.post(url, json=payload, timeout=15)
-#     resp.raise_for_status()
-#     return resp.json()
-
-
-# def pi_poll_transfer_status(seller_info: Dict, timeout_s: int = TRANSFER_TIMEOUT_S) -> Dict:
-#     """
-#     Polls GET /transfer/status on the seller Pi until active == False,
-#     then returns the final status dict.
-#     Hard-stops and closes the relay if timeout_s is exceeded.
-#     """
-#     url     = f"{meter_url(seller_info['hostname'], seller_info['meter_port'])}/transfer/status"
-#     elapsed = 0
-
-#     while elapsed < timeout_s:
-#         resp   = requests.get(url, timeout=10)
-#         resp.raise_for_status()
-#         status = resp.json()
-
-#         if not status.get("active", True):
-#             return status
-
-#         time.sleep(TRANSFER_POLL_INTERVAL_S)
-#         elapsed += TRANSFER_POLL_INTERVAL_S
-
-#     # Timed out — attempt graceful relay close
-#     try:
-#         requests.post(
-#             f"{meter_url(seller_info['hostname'], seller_info['meter_port'])}/transfer/stop",
-#             json={"from_pi_ip": seller_info["hostname"], "to_pi_ip": "", "transfer_kwh": 0},
-#             timeout=10,
-#         )
-#     except Exception:
-#         pass
-
-#     return {"active": False, "stop_reason": "timeout", "relay_on": False}
-
-
-# def execute_single_match(match: Dict, addr_map: Dict) -> Dict:
-#     """
-#     Runs one buyer<->seller match end-to-end (blocking).
-#     Called inside a thread-pool so all matches run in parallel.
-#     """
-#     buyer_addr  = match["buyer_id"].lower()
-#     seller_addr = match["seller_id"].lower()
-#     energy_kwh  = match["energy_matched"]
-#     price       = match["price"]
-
-#     result = {
-#         "buyer":           match["buyer_id"],
-#         "seller":          match["seller_id"],
-#         "energy_kwh":      energy_kwh,
-#         "price":           price,
-#         "transfer_status": None,
-#         "error":           None,
-#     }
-
-#     # 1. Resolve Pi info from address map
-#     seller_info = addr_map.get(seller_addr)
-#     buyer_info  = addr_map.get(buyer_addr)
-
-#     if not seller_info:
-#         result["error"] = f"Seller {match['seller_id']} not found in pis.json"
-#         return result
-#     if not buyer_info:
-#         result["error"] = f"Buyer {match['buyer_id']} not found in pis.json"
-#         return result
-
-#     print(f"[transfer] {seller_info['name']} -> {buyer_info['name']}  {energy_kwh} kWh @ {price}")
-
-#     # 2. Start transfer on seller Pi
-#     try:
-#         start_resp = pi_start_transfer(seller_info, buyer_info["hostname"], energy_kwh)
-#         print(f"[transfer] started: {start_resp}")
-#     except Exception as e:
-#         result["error"] = f"Failed to start transfer on {seller_info['name']}: {e}"
-#         return result
-
-#     # 3. Poll until relay closes (energy delivered)
-#     try:
-#         final_status = pi_poll_transfer_status(seller_info)
-#         result["transfer_status"] = final_status
-#         stop_reason = final_status.get("stop_reason", "completed")
-#         print(f"[transfer] done ({stop_reason}): {seller_info['name']} -> {buyer_info['name']}")
-#     except Exception as e:
-#         result["error"] = f"Error polling transfer status: {e}"
-
-#     return result
-
-
-# # ─── Endpoints ────────────────────────────────────────────────────────────────
-
-# @app.post("/transfer")
-# def transfer_energy():
-#     """
-#     Reads result.json and executes all energy transfers in parallel.
-#     For each match: opens seller relay -> polls until energy delivered -> closes relay.
-#     Returns a per-match summary.
-#     """
-#     try:
-#         matches = load_result_json(RESULT_FILE)
-#     except FileNotFoundError:
-#         raise HTTPException(status_code=404, detail=f"{RESULT_FILE} not found")
-#     except json.JSONDecodeError as e:
-#         raise HTTPException(status_code=400, detail=f"Invalid JSON in {RESULT_FILE}: {e}")
-
-#     if not matches:
-#         return {"status": "no_matches", "results": []}
-
-#     try:
-#         addr_map = build_address_to_pi_map(PIS_JSON_PATH)
-#     except FileNotFoundError:
-#         raise HTTPException(status_code=500, detail="pis.json not found")
-
-#     results: List[Dict[str, Any]] = []
-
-#     with concurrent.futures.ThreadPoolExecutor(max_workers=len(matches)) as pool:
-#         futures = {
-#             pool.submit(execute_single_match, match, addr_map): match
-#             for match in matches
-#         }
-#         for future in concurrent.futures.as_completed(futures):
-#             try:
-#                 results.append(future.result())
-#             except Exception as e:
-#                 original = futures[future]
-#                 results.append({
-#                     "buyer":  original.get("buyer_id"),
-#                     "seller": original.get("seller_id"),
-#                     "error":  str(e),
-#                 })
-
-#     success_count = sum(
-#         1 for r in results
-#         if r.get("error") is None
-#         and r.get("transfer_status", {}).get("stop_reason") != "timeout"
-#     )
-
-#     return {
-#         "status":        "completed",
-#         "total_matches": len(matches),
-#         "succeeded":     success_count,
-#         "failed":        len(matches) - success_count,
-#         "results":       results,
-#     }
-
-
-# @app.get("/transfer/status/{seller_hostname}")
-# def get_transfer_status_for_pi(seller_hostname: str):
-#     """
-#     Proxy GET /transfer/status from a specific seller Pi by hostname/IP.
-#     Useful for checking progress of an ongoing transfer.
-#     """
-#     try:
-#         with open(PIS_JSON_PATH) as f:
-#             pis = json.load(f)
-
-#         port = METER_API_PORT
-#         for info in pis.values():
-#             if info.get("hostname") == seller_hostname:
-#                 port = info.get("meter_port", METER_API_PORT)
-#                 break
-
-#         resp = requests.get(f"http://{seller_hostname}:{port}/transfer/status", timeout=10)
-#         resp.raise_for_status()
-#         return resp.json()
-
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 
 """
