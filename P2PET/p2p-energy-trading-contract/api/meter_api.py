@@ -23,6 +23,7 @@ from pydantic import BaseModel
 import meter.modbus as modbus
 import meter.registers as reg
 import meter.relay as relay
+from fastapi.middleware.cors import CORSMiddleware
 
 # ─── Lifespan ────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,14 @@ app = FastAPI(
     description="REST API for reading Modbus RS485 single-phase energy meter data",
     version="1.0.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["http://localhost:5173"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ─── Response schemas ─────────────────────────────────────────────────────────
@@ -88,7 +97,8 @@ class TransferStartRequest(BaseModel):
     from_pi_ip: str
     to_pi_ip: str
     transfer_kwh: float # override default if provided
-
+    from_port:    int = 8000   # default fallback
+    to_port:      int = 8000 
 class TransferStatusResponse(BaseModel):
     active:           bool
     relay_on:         bool
@@ -216,6 +226,8 @@ def start_transfer(body: TransferStartRequest):
             from_pi_ip=body.from_pi_ip,
             to_pi_ip=body.to_pi_ip,
             transfer_kwh=body.transfer_kwh,
+            from_port=body.from_port,   
+            to_port=body.to_port
         )
         return {"status": "transfer_started", "transfer_kwh": body.transfer_kwh}
 
@@ -254,4 +266,5 @@ def transfer_status():
 
 if __name__ == "__main__":
     import uvicorn
+ 
     uvicorn.run("meter_api:app", host="0.0.0.0", port=8002, reload=False)

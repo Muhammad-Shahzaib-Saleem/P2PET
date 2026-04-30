@@ -11,7 +11,8 @@ The transfer session:
 
 Change RELAY_PIN and THRESHOLD_REVERSE_ENERGY to match your hardware.
 """
-
+import argparse
+import sys
 import threading
 import time
 from typing import Optional
@@ -19,12 +20,26 @@ import requests
 from meter.modbus import GPIO_AVAILABLE
 from meter.registers import read_energy_rev_old
 
+
+
+
+
+
 # ─── Config ───────────────────────────────────────────────────────────────────
 
 RELAY_PIN                 = 27       # BCM GPIO pin connected to relay IN
 RELAY_ACTIVE_HIGH         = False    # False → LOW turns relay ON (Active LOW)
 
 POLL_INTERVAL             = 1.0      # seconds between energy reads during transfer
+
+
+
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--port", type=int, default=8003)
+args, _ = parser.parse_known_args()
+OWN_PORT = args.port
 
 # ─── GPIO import (safe) ───────────────────────────────────────────────────────
 
@@ -56,25 +71,39 @@ _poll_thread: Optional[threading.Thread] = None
 
 
 
-
-
-
-
-def get_reverse_energy(pi_ip: str) -> float:
-    r = requests.get(f"http://{pi_ip}:8002/meter/energy", timeout=3)
+def get_reverse_energy(pi_ip: str, port: int) -> float:
+    r = requests.get(f"http://{pi_ip}:{port}/meter/energy", timeout=3)
     data = r.json()
     return data["energy_rev_old_kwh"]
 
-def get_forward_energy(pi_ip: str) -> float:
-    r = requests.get(f"http://{pi_ip}:8003/meter/energy", timeout=3)
+def get_forward_energy(pi_ip: str, port: int) -> float:
+    r = requests.get(f"http://{pi_ip}:{port}/meter/energy", timeout=3)
     data = r.json()
     return data["energy_fwd_old_kwh"]
 
-def set_relay(pi_ip: str, state: bool):
+def set_relay(pi_ip: str, state: bool, port: int):
     requests.post(
-        f"http://{pi_ip}:8002/relay/set",
+        f"http://{pi_ip}:{port}/relay/set",
         json={"state": state}
     )
+
+
+
+# def get_reverse_energy(pi_ip: str) -> float:
+#     r = requests.get(f"http://{pi_ip}:8002/meter/energy", timeout=3)
+#     data = r.json()
+#     return data["energy_rev_old_kwh"]
+
+# def get_forward_energy(pi_ip: str) -> float:
+#     r = requests.get(f"http://{pi_ip}:8003/meter/energy", timeout=3)
+#     data = r.json()
+#     return data["energy_fwd_old_kwh"]
+
+# def set_relay(pi_ip: str, state: bool):
+#     requests.post(
+#         f"http://{pi_ip}:8002/relay/set",
+#         json={"state": state}
+#     )
 
 # ─── Low-level relay helpers ──────────────────────────────────────────────────
 
@@ -98,12 +127,11 @@ def relay_off():
 # ─── Background polling thread ────────────────────────────────────────────────
 
 
-def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
+def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float,from_port: int, to_port: int):
     try:
         while not _stop_event.is_set():
-            to_rev   = get_reverse_energy(to_pi_ip)
-            from_fwd = get_forward_energy(from_pi_ip)
-
+            to_rev   = get_reverse_energy(to_pi_ip, to_port)
+            from_fwd = get_forward_energy(from_pi_ip,from_port)
 
             if to_rev is None or from_fwd is None:
                 print(f"[monitor] meter read returned None, retrying...")
@@ -118,7 +146,7 @@ def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
             delivered = to_rev - start_rev            # ← use local var
 
             if delivered >= transfer_kwh:
-                set_relay(to_pi_ip, False)
+                set_relay(to_pi_ip, False,to_port)
                 with _lock:
                     _state["active"]      = False
                     _state["relay_on"]    = False
@@ -129,7 +157,7 @@ def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
             time.sleep(1)
 
     except Exception as e:
-        set_relay(to_pi_ip, False)
+        set_relay(to_pi_ip, False,to_port)
         with _lock:
             _state["active"]      = False
             _state["relay_on"]    = False
@@ -139,23 +167,57 @@ def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
 
 # ─── Public session API ───────────────────────────────────────────────────────
 
-def start_transfer(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
-    """
-    Start a P2P energy transfer session.
-    - Opens relay on TO pi
-    - Monitors reverse energy on TO pi
-    - Closes relay when transfer_kwh has been delivered
-    """
+# def start_transfer(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
+#     """
+#     Start a P2P energy transfer session.
+#     - Opens relay on TO pi
+#     - Monitors reverse energy on TO pi
+#     - Closes relay when transfer_kwh has been delivered
+#     """
+#     global _poll_thread
+
+#     with _lock:
+#         if _state["active"]:
+#             raise RuntimeError("A transfer session is already active")
+
+#         # Snapshot starting reverse energy on TO pi
+#         to_start_rev = get_reverse_energy(to_pi_ip)
+
+#         # Reset state
+#         _state.update({
+#             "active":           True,
+#             "relay_on":         True,
+#             "start_time":       time.time(),
+#             "end_time":         None,
+#             "to_start_rev":     to_start_rev,
+#             "current_to_rev":   to_start_rev,
+#             "current_from_fwd": None,
+#             "threshold":        transfer_kwh,
+#             "stop_reason":      None,
+#         })
+
+#     # Open relay on TO pi
+#     set_relay(to_pi_ip, True)
+
+#     # Start background monitor
+#     _stop_event.clear()
+#     _poll_thread = threading.Thread(
+#         target=_monitor_loop,
+#         args=(from_pi_ip, to_pi_ip, transfer_kwh),
+#         daemon=True,
+#     )
+#     _poll_thread.start()
+
+def start_transfer(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float,
+                   from_port: int = OWN_PORT, to_port: int = OWN_PORT):
     global _poll_thread
 
     with _lock:
         if _state["active"]:
             raise RuntimeError("A transfer session is already active")
 
-        # Snapshot starting reverse energy on TO pi
-        to_start_rev = get_reverse_energy(to_pi_ip)
+        to_start_rev = get_reverse_energy(to_pi_ip, to_port)
 
-        # Reset state
         _state.update({
             "active":           True,
             "relay_on":         True,
@@ -168,18 +230,15 @@ def start_transfer(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
             "stop_reason":      None,
         })
 
-    # Open relay on TO pi
-    set_relay(to_pi_ip, True)
+    set_relay(to_pi_ip, True, to_port)
 
-    # Start background monitor
     _stop_event.clear()
     _poll_thread = threading.Thread(
         target=_monitor_loop,
-        args=(from_pi_ip, to_pi_ip, transfer_kwh),
+        args=(from_pi_ip, to_pi_ip, transfer_kwh, from_port, to_port),
         daemon=True,
     )
     _poll_thread.start()
-
 
 def stop_transfer(to_pi_ip: str):
     """Manually abort an active transfer session."""
