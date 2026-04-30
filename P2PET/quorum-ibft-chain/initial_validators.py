@@ -1,5 +1,5 @@
 # List of specific Raspberry Pi nodes to run the blockchain on
-nodes_to_run = [2,11,13,15]
+nodes_to_run = [1,2,3,11,13,15]
 # nodes_to_run = [1, 2, 3, 4]
 
 # Mapping of node number to IP addresses

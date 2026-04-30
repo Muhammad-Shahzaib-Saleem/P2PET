@@ -104,6 +104,12 @@ def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
             to_rev   = get_reverse_energy(to_pi_ip)
             from_fwd = get_forward_energy(from_pi_ip)
 
+
+            if to_rev is None or from_fwd is None:
+                print(f"[monitor] meter read returned None, retrying...")
+                time.sleep(1)
+                continue
+
             with _lock:
                 _state["current_to_rev"]   = to_rev
                 _state["current_from_fwd"] = from_fwd
@@ -127,6 +133,7 @@ def _monitor_loop(from_pi_ip: str, to_pi_ip: str, transfer_kwh: float):
         with _lock:
             _state["active"]      = False
             _state["relay_on"]    = False
+            _state["end_time"]    = time.time()
             _state["stop_reason"] = f"ERROR: {str(e)}"
 
 

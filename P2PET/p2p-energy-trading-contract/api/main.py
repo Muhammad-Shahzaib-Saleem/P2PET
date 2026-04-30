@@ -48,9 +48,14 @@ def load_matches():
 
 
 PI_NODES = [
-    # {"name": "pi_1",  "host": "100.76.91.82",    "username": "pi", "password": "Lums12345", "port": 8001},
-    {"name": "pi_2",  "host": "100.93.80.36",    "username": "pi", "password": "Lums12345", "port": 8002},
-    {"name": "pi_15", "host": "100.120.124.29",  "username": "pi", "password": "Lums12345", "port": 8003},
+    {"name": "pi_1",  "host": "100.76.91.82",      "username": "pi", "password": "Lums12345", "port": 8001},
+    {"name": "pi_2",  "host": "100.93.80.36",   "username": "pi", "password": "Lums12345", "port": 8002},
+    {"name": "pi_3",  "host": "100.71.238.87", "username": "pi", "password": "Lums12345", "port": 8003},
+    {"name": "pi_4",  "host": "100.80.205.106", "username": "pi", "password": "Lums12345", "port": 8004},
+    {"name": "pi_11",  "host": "100.120.139.128", "username": "pi", "password": "Lums12345", "port": 8005},
+    {"name": "pi_13",  "host": "100.80.11.48",   "username": "pi", "password": "Lums12345", "port": 8006},
+    {"name": "pi_15",  "host": "100.120.124.29", "username": "pi", "password": "Lums12345", "port": 8007},
+    
 ]
 
 ROLE_MAP = {
@@ -72,7 +77,7 @@ with open("NodeNum.txt", "r") as f:
 
 rpc_port_num = 22000
 
-RPC_URL = f"http://{'100.120.139.128'}:{str(rpc_port_num+node_number)}"
+RPC_URL = f"http://{'100.76.91.82'}:{str(rpc_port_num+node_number)}"
 
 # RPC_URL = f"https://100.110.53.19:22004"
 # LOCAL_RPC_URL = "https://127.0.0.1:22000"
@@ -1099,7 +1104,7 @@ def meter_url(hostname: str, port: int) -> str:
     return f"http://{hostname}:{port}"
 
 
-def pi_start_transfer(pi_info: Dict, from_hostname: str, to_hostname: str, energy_kwh: float) -> Dict:
+def pi_start_transfer(pi_info: Dict, from_hostname: str, to_hostname: str, energy_kwh: float, from_port: int, to_port: int) -> Dict:
     """
     Calls POST /transfer/start on the given Pi.
     from_hostname = the Pi pushing energy (seller)
@@ -1110,6 +1115,8 @@ def pi_start_transfer(pi_info: Dict, from_hostname: str, to_hostname: str, energ
         "from_pi_ip":   from_hostname,
         "to_pi_ip":     to_hostname,
         "transfer_kwh": energy_kwh,
+        "from_port":   from_port,
+        "to_port":     to_port
     }
     resp = requests.post(url, json=payload, timeout=15)
     resp.raise_for_status()
@@ -1286,6 +1293,8 @@ def execute_single_match(match: Dict, addr_map: Dict) -> Dict:
             from_hostname=seller_info["hostname"],
             to_hostname=buyer_info["hostname"],
             energy_kwh=energy_kwh,
+            from_port=seller_info["meter_port"],
+            to_port=buyer_info["meter_port"]
         )
 
     def start_buyer():
@@ -1294,6 +1303,8 @@ def execute_single_match(match: Dict, addr_map: Dict) -> Dict:
             from_hostname=seller_info["hostname"],
             to_hostname=buyer_info["hostname"],
             energy_kwh=energy_kwh,
+            from_port=seller_info["meter_port"],
+            to_port=buyer_info["meter_port"]
         )
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
@@ -1394,6 +1405,17 @@ def transfer_energy():
 
     try:
         addr_map = build_address_to_pi_map(PIS_JSON_PATH)
+
+        print("=== ADDRESS MAP ===")
+        for addr, info in addr_map.items():
+            print(f"  {addr} -> {info['name']} @ {info['hostname']}:{info['meter_port']}")
+
+        matches = load_result_json(RESULT_FILE)
+        print("=== MATCHES ===")
+        for m in matches:
+            print(f"  buyer:  {m['buyer_id'].lower()}")
+            print(f"  seller: {m['seller_id'].lower()}")
+
     except FileNotFoundError:
         raise HTTPException(status_code=500, detail="pis.json not found")
 

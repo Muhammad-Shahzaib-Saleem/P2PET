@@ -7,8 +7,13 @@ import "./EnergyDashboardView.css";
 
 // 👇 Your Pi endpoints
 const PIS = [
-  { id: 1, name: "Pi 1", ip: "http://100.93.80.36:8002" },
-  { id: 2, name: "Pi 2", ip: "http://100.120.124.29:8003" },
+  { id: 1, name: "Pi 1", ip: "http://100.76.91.82:8001" },
+  { id: 2, name: "Pi 2", ip: "http://100.93.80.36:8002" },
+  { id: 3, name: "Pi 3", ip: "http://100.71.238.87:8003" },
+  { id: 4, name: "Pi 4", ip: "http://100.80.205.106:8004" },
+  { id: 4, name: "Pi 11", ip: "http://100.120.139.128:8005" },
+  { id: 5, name: "Pi 13", ip: "http://100.80.11.48:8006" },
+  { id: 6, name: "Pi 15", ip: "http://100.120.124.29:8007" },
 ];
 
 const EnergyDashboardView = () => {
