@@ -1,8 +1,14 @@
 [
   {
-    "buyer_id": "0xcb2fc901d54b9e05b39435f5e91818562b3e0d5c",
-    "seller_id": "0x8B4A71b66Fd56fDd72dB648E24C6f2AAeF56d193",
-    "energy_matched": 1.0,
-    "price": 7.0
+    "buyer_id": "0xBE8f306c75fCe9f268fa21F5197937a24dD9decA",
+    "seller_id": "0x0Fd2b02d38bd2020eDc865feF2944c722370F877",
+    "energy_matched": 0.1,
+    "price": 20.0
+  },
+  {
+    "buyer_id": "0x16B08005B343A5381f17F462D64Cc209bfcaeb84",
+    "seller_id": "0x0Fd2b02d38bd2020eDc865feF2944c722370F877",
+    "energy_matched": 0.05,
+    "price": 15.0
   }
 ]

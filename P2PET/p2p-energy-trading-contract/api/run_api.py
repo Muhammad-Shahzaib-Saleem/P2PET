@@ -14,13 +14,19 @@ import time
 # ─── Pi node registry ─────────────────────────────────────────────────────────
 # Add as many Pis as you have. Each gets its own port.
 
+# PI_NODES = [
+#     {"name": "pi_2",  "host": "100.93.80.36",   "username": "pi", "password": "Lums12345", "port": 8002},
+#     {"name": "pi_3",  "host": "100.71.238.87", "username": "pi", "password": "Lums12345", "port": 8008},
+#     {"name": "pi_4",  "host": "100.80.205.106", "username": "pi", "password": "Lums12345", "port": 8004},
+#     {"name": "pi_5",  "host": "100.120.139.128", "username": "pi", "password": "Lums12345", "port": 8005},
+#     {"name": "pi_6",  "host": "100.80.11.48",   "username": "pi", "password": "Lums12345", "port": 8006},
+#     {"name": "pi_7",  "host": "100.120.124.29", "username": "pi", "password": "Lums12345", "port": 8007},
+# ]
+
+
 PI_NODES = [
-    {"name": "pi_1",  "host": "100.76.91.82",      "username": "pi", "password": "Lums12345", "port": 8001},
-    {"name": "pi_2",  "host": "100.93.80.36",   "username": "pi", "password": "Lums12345", "port": 8002},
-    {"name": "pi_3",  "host": "100.71.238.87", "username": "pi", "password": "Lums12345", "port": 8003},
-    {"name": "pi_11",  "host": "100.120.139.128", "username": "pi", "password": "Lums12345", "port": 8004},
-    {"name": "pi_13",  "host": "100 .80.11.48",   "username": "pi", "password": "Lums12345", "port": 8005},
-    {"name": "pi_15",  "host": "100.120.124 .29", "username": "pi", "password": "Lums12345", "port": 8006},
+
+    {"name": "pi_3",  "host": "100.71.238.87", "username": "pi", "password": "Lums12345", "port": 8009},    {"name": "pi_5",  "host": "100.120.139.128", "username": "pi", "password": "Lums12345", "port": 8005},{"name": "pi_7",  "host": "100.120.124.29", "username": "pi", "password": "Lums12345", "port": 8007},
 ]
 
 PROJECT_DIR = "/home/pi/Desktop/P2PET_Dynamic/P2PET"

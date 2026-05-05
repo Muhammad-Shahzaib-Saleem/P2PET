@@ -105,12 +105,12 @@ import time
 # ═══════════════════════════════════════════════════════════════════
 
 PI_NODES = [
-    {"host": "100.76.91.82",   "api_port": 8001},
-    {"host": "100.93.80.36", "api_port": 8002},
+    {"host": "100.93.80.36",   "api_port": 8002},
     {"host": "100.71.238.87", "api_port": 8003},
-    {"host": "100.120.139.128", "api_port": 8004},
-    {"host": "100.80.11.48", "api_port": 8005},
-    {"host": "100.120.124.29", "api_port": 8006},
+    {"host": "100.80.205.106", "api_port": 8004},
+    {"host": "100.120.139.128", "api_port": 8005},
+    {"host": "100.80.11.48", "api_port": 8006},
+    {"host": "100.120.124.29", "api_port": 8007},
 
     # 👉 add more Pis here
 ]
@@ -143,7 +143,7 @@ def run_on_pi(node):
         # per-pi API base (IMPORTANT FIX)
         api_base = f"http://127.0.0.1:{port}"
 
-        cmd = f"API_BASE={api_base} sudo -E python3 {PI_SCRIPT}"
+        cmd = f"API_BASE={api_base}  python3 {PI_SCRIPT}"
 
         print(prefix + f"Running display.py with API_BASE={api_base}")
 

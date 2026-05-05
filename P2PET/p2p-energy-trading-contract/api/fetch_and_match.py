@@ -7,7 +7,7 @@ from matching import Offer, greedy_double_auction
 from eth_utils import keccak
 
 
-SCALING_FACTOR = 100  # Must match scaling in contract submission
+SCALING_FACTOR = 1000  # Must match scaling in contract submission
 
 def fetch_all_participants(contract):
     """Fetch participant data from the smart contract."""

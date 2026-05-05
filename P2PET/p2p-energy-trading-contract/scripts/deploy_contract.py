@@ -195,7 +195,7 @@ update_keystore_path_in_env()
 load_dotenv()  # must be called before reading any env vars
 
 # ===== Configuration =====
-RPC_URL       = "http://100.76.91.82:22000"
+RPC_URL       = "http://100.93.80.36:22000"
 CONTRACT_NAME = "energy_trade"
 ABI_PATH      = "../compiled/EnergyTrade_abi.json"
 BYTECODE_PATH = "../compiled/EnergyTrade_bytecode.txt"
@@ -330,6 +330,16 @@ def get_eth_address_from_pi(hostname: str, node_num: int) -> str | None:
 
 # ========================== pis.json Generator ==========================
 
+
+METER_PORT_MAP = {
+    2: 8002,
+    3: 8003,
+    4: 8004,
+    11: 8005,
+    13: 8006,
+    15: 8007
+}
+
 def generate_pis_json(output_path: str) -> str:
     """
     Generate pis.json with all Pi hostnames, node info, AND their
@@ -361,6 +371,7 @@ def generate_pis_json(output_path: str) -> str:
             "hostname":    hostname,
             "node_num":    idx,          # 0-based index used for RPC port offset
             "eth_address": eth_address,  # None if fetch failed — fix manually if needed
+            "meter_port": METER_PORT_MAP.get(node_num)
         }
 
     with open(output_path, "w") as f:
