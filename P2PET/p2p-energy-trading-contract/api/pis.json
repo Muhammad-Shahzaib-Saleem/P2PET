@@ -4,7 +4,7 @@
         "pi_num": 2,
         "hostname": "100.93.80.36",
         "node_num": 0,
-        "eth_address": "0xBE8f306c75fCe9f268fa21F5197937a24dD9decA",
+        "eth_address": "0x40892e7a97a5b4fcDd1D057EBED7BD204755ec72",
         "meter_port": 8002
     },
     "pi_3": {
@@ -12,7 +12,7 @@
         "pi_num": 3,
         "hostname": "100.71.238.87",
         "node_num": 1,
-        "eth_address": "0x16B08005B343A5381f17F462D64Cc209bfcaeb84",
+        "eth_address": "0xD881A5AAc0A7d55A38183733eA49CAFFa3CEDCD5",
         "meter_port": 8003
     },
     "pi_4": {
@@ -20,7 +20,7 @@
         "pi_num": 4,
         "hostname": "100.80.205.106",
         "node_num": 2,
-        "eth_address": "0x2c41a74BE777E50EC15217616888d029508aB56c",
+        "eth_address": "0xF36D1F8610d20f0A9Fd7889311c9eD8F78aB6b8e",
         "meter_port": 8004
     },
     "pi_11": {
@@ -28,7 +28,7 @@
         "pi_num": 11,
         "hostname": "100.120.139.128",
         "node_num": 3,
-        "eth_address": "0x0Fd2b02d38bd2020eDc865feF2944c722370F877",
+        "eth_address": "0x7C943890992353Bb7734837f0674720eE667DF27",
         "meter_port": 8005
     },
     "pi_13": {
@@ -36,7 +36,7 @@
         "pi_num": 13,
         "hostname": "100.80.11.48",
         "node_num": 4,
-        "eth_address": "0xac6b35bf0438EcE755600218AE752a4De5306C8d",
+        "eth_address": "0x9c92A9f9C8F6E6B957bFf4E0462b1CB110141fD4",
         "meter_port": 8006
     },
     "pi_15": {
@@ -44,7 +44,7 @@
         "pi_num": 15,
         "hostname": "100.120.124.29",
         "node_num": 5,
-        "eth_address": "0x4D05b4a2CF399123be3238F57e64F8b44F79D8F6",
+        "eth_address": "0x655Cf5f91d42A1C3Cb66cE45649650e4755BbF0f",
         "meter_port": 8007
     }
 }

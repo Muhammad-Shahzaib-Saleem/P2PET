@@ -2284,6 +2284,58 @@ def _report_open_windows(current_round: int):
 
 #     print(f"[AutoTransfer] ❌ Round {round_number} — all {MAX_RETRIES} attempts failed.")
 
+
+def _cleanup_expired_transfers(round_number: int):
+    """
+    Called when a transfer window closes with potentially active transfers.
+    Turns OFF the relay on every buyer (to_pi) and seller (from_pi) that is
+    still in an active transfer session.
+    """
+    print(f"[Cleanup] 🧹 Round {round_number} — shutting down any active relays...")
+
+    try:
+        addr_map = build_address_to_pi_map(PIS_JSON_PATH)
+    except Exception as e:
+        print(f"[Cleanup] ❌ Could not load pis.json: {e}")
+        return
+
+    # Hit /transfer/status on every Pi; if active=True, call /transfer/stop
+    for addr, info in addr_map.items():
+        hostname   = info["hostname"]
+        meter_port = info["meter_port"]
+        base_url   = f"http://{hostname}:{meter_port}"
+
+        try:
+            resp   = requests.get(f"{base_url}/transfer/status", timeout=8)
+            resp.raise_for_status()
+            status = resp.json()
+
+            if status.get("active"):
+                print(f"[Cleanup]   ⚡ {info['name']} still active — turning relay OFF...")
+                stop_payload = {
+                    "from_pi_ip":   hostname,   # doesn't matter for stop, just satisfies schema
+                    "to_pi_ip":     hostname,
+                    "transfer_kwh": 0,
+                    "from_port":    meter_port,
+                    "to_port":      meter_port,
+                }
+                stop_resp = requests.post(f"{base_url}/transfer/stop",
+                                          json=stop_payload, timeout=8)
+                stop_resp.raise_for_status()
+                print(f"[Cleanup]   ✅ {info['name']} relay OFF — {stop_resp.json()}")
+            else:
+                print(f"[Cleanup]   ✓  {info['name']} already inactive "
+                      f"(stop_reason: {status.get('stop_reason', 'none')})")
+
+        except requests.exceptions.ConnectionError:
+            print(f"[Cleanup]   ⚠️  {info['name']} unreachable — skipping")
+        except Exception as e:
+            print(f"[Cleanup]   ❌ {info['name']} error: {e}")
+
+    print(f"[Cleanup] ✅ Round {round_number} cleanup complete.")
+
+
+
 def _auto_trigger_transfer(round_number: int):
     """
     Keeps retrying transfer_energy() until ALL matches succeed (THRESHOLD_REACHED)
@@ -2302,6 +2354,7 @@ def _auto_trigger_transfer(round_number: int):
         remaining = get_transfer_window_remaining(round_number)
         if remaining <= 0:
             print(f"[AutoTransfer] ⏰ Round {round_number} — transfer window closed. Stopping.")
+            _cleanup_expired_transfers(round_number)
             return
 
         attempt += 1
@@ -2364,6 +2417,7 @@ def _auto_trigger_transfer(round_number: int):
             remaining = get_transfer_window_remaining(round_number)
             if remaining <= 0:
                 print(f"[AutoTransfer] ⏰ Round {round_number} — window closed after attempt {attempt}. Stopping.")
+                _cleanup_expired_transfers(round_number)
                 return
 
             print(
@@ -2379,6 +2433,7 @@ def _auto_trigger_transfer(round_number: int):
             )
             if remaining <= 0:
                 print(f"[AutoTransfer] ⏰ Window closed. Stopping.")
+                _cleanup_expired_transfers(round_number)
                 return
 
         except Exception as e:
@@ -2463,6 +2518,17 @@ def phase_keeper_loop():
                     print(f"[Keeper] ✅ Now: Round {new_round} | {PHASE_NAMES.get(new_phase, str(new_phase))}")
 
                     if new_phase == 2:
+
+                         # ── Clean up any lingering transfers from the previous round ──────
+                        prev_round = current_round - 1
+                        if prev_round >= 1:
+                            prev_remaining = get_transfer_window_remaining(prev_round)
+                            if prev_remaining <= 0:   # window has fully expired
+                                threading.Thread(
+                                    target=_cleanup_expired_transfers,
+                                    args=(prev_round,),
+                                    daemon=True
+                                ).start()
                         # ── open 60-min transfer window for the round that just finished Execution
                         deadline = time.time() + TRANSFER_WINDOW_SECONDS
                         with transfer_deadlines_lock:
