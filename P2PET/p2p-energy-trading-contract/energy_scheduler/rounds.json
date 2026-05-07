@@ -1,0 +1,81 @@
+{
+  "rounds": {
+    "1": [
+      {
+        "hostname": "pi_2",
+        "role": "buyer",
+        "energy": 0.5,
+        "price": 10
+      },
+      {
+        "hostname": "pi_3",
+        "role": "buyer",
+        "energy": 0.04,
+        "price": 8
+      },
+      {
+        "hostname": "pi_4",
+        "role": "buyer",
+        "energy": 1,
+        "price": 3
+      },
+      {
+        "hostname": "pi_11",
+        "role": "seller",
+        "energy": 1,
+        "price": 5
+      },
+      {
+        "hostname": "pi_13",
+        "role": "seller",
+        "energy": 1,
+        "price": 6
+      },
+      {
+        "hostname": "pi_15",
+        "role": "seller",
+        "energy": 0.5,
+        "price": 4
+      }
+    ],
+
+    "2": [
+      {
+        "hostname": "pi_2",
+        "role": "buyer",
+        "energy": 0.08,
+        "price": 15
+      },
+      {
+        "hostname": "pi_3",
+        "role": "buyer",
+        "energy": 1,
+        "price": 3
+      },
+      {
+        "hostname": "pi_4",
+        "role": "buyer",
+        "energy": 0.04,
+        "price": 8
+      },
+      {
+        "hostname": "pi_11",
+        "role": "seller",
+        "energy": 0.08,
+        "price": 4
+      },
+      {
+        "hostname": "pi_13",
+        "role": "seller",
+        "energy": 1,
+        "price": 6
+      },
+      {
+        "hostname": "pi_15",
+        "role": "seller",
+        "energy": 1,
+        "price": 5
+      }
+    ]
+  }
+}

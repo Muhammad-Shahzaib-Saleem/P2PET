@@ -3099,6 +3099,16 @@ def get_total_participants():
         return {"TOTAL_PARTICIPANTS": contract.functions.TOTAL_PARTICIPANTS().call()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@app.get("/contract/status")
+def contract_status():
+    return {
+        "current_round": contract.functions.currentRound().call(),
+        "current_phase": contract.functions.currentPhase().call(),
+        "time_remaining": contract.functions.timeRemaining().call(),
+        "round_time_remaining": contract.functions.roundTimeRemaining().call()
+    }
 
 
 @app.get("/participants_list")
